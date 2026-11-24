@@ -1,7 +1,7 @@
 import React, { useState, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
-import { UserPlus, ShieldAlert } from "lucide-react";
+import { UserPlus, Shield, Mail, Lock, User, ArrowLeft } from "lucide-react";
 
 export default function Register() {
   const { register } = useContext(AuthContext);
@@ -28,31 +28,36 @@ export default function Register() {
   };
 
   return (
-    <div style={{ maxWidth: "450px", margin: "3rem auto" }}>
-      <div className="card">
-        <div style={{ textAlign: "center", marginBottom: "1.5rem" }}>
-          <div className="brand-icon" style={{ margin: "0 auto 0.75rem", width: "48px", height: "48px" }}>
-            <ShieldAlert size={28} />
+    <div style={{ maxWidth: "480px", margin: "3.5rem auto", padding: "0 1rem" }}>
+      <div className="card" style={{ padding: "2.5rem 2rem", boxShadow: "var(--shadow-lg)" }}>
+        <div style={{ textAlign: "center", marginBottom: "1.75rem" }}>
+          <div className="brand-crest" style={{ margin: "0 auto 0.85rem", width: "44px", height: "44px" }}>
+            <Shield size={24} strokeWidth={2.5} />
           </div>
-          <h2 style={{ fontSize: "1.5rem" }}>Register Citizen Account</h2>
-          <p style={{ color: "#94a3b8", fontSize: "0.85rem", marginTop: "0.25rem" }}>
-            Create an account to report civic issues and track resolutions
+          <h2 style={{ fontSize: "1.65rem", color: "var(--deep-navy)", fontWeight: "800", letterSpacing: "-0.02em" }}>
+            Create Citizen Account
+          </h2>
+          <p style={{ color: "var(--text-secondary)", fontSize: "0.88rem", marginTop: "0.3rem" }}>
+            Join JanSeva AI to lodge grievances, track repairs, and verify city resolutions
           </p>
         </div>
 
         {error && (
-          <div style={{ background: "rgba(239, 68, 68, 0.15)", border: "1px solid #ef4444", color: "#f87171", padding: "0.75rem", borderRadius: "8px", fontSize: "0.85rem", marginBottom: "1rem" }}>
+          <div style={{ backgroundColor: "#FEF2F2", border: "1px solid #FECACA", color: "#B91C1C", padding: "0.85rem", borderRadius: "8px", fontSize: "0.85rem", marginBottom: "1.25rem" }}>
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1.1rem" }}>
           <div>
-            <label className="preview-label">Full Name</label>
+            <label style={{ fontSize: "0.75rem", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--text-secondary)", display: "flex", alignItems: "center", gap: "0.35rem" }}>
+              <User size={13} color="var(--primary-emerald)" />
+              <span>Full Name</span>
+            </label>
             <input
               type="text"
-              className="chat-input"
-              style={{ width: "100%", marginTop: "0.25rem" }}
+              className="chat-text-input"
+              style={{ width: "100%", marginTop: "0.35rem", padding: "0.75rem 1rem" }}
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Rahul Sharma"
@@ -61,37 +66,50 @@ export default function Register() {
           </div>
 
           <div>
-            <label className="preview-label">Email Address</label>
+            <label style={{ fontSize: "0.75rem", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--text-secondary)", display: "flex", alignItems: "center", gap: "0.35rem" }}>
+              <Mail size={13} color="var(--primary-emerald)" />
+              <span>Official Email Address</span>
+            </label>
             <input
               type="email"
-              className="chat-input"
-              style={{ width: "100%", marginTop: "0.25rem" }}
+              className="chat-text-input"
+              style={{ width: "100%", marginTop: "0.35rem", padding: "0.75rem 1rem" }}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="name@example.com"
+              placeholder="rahul@example.com"
               required
             />
           </div>
 
           <div>
-            <label className="preview-label">Password</label>
+            <label style={{ fontSize: "0.75rem", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--text-secondary)", display: "flex", alignItems: "center", gap: "0.35rem" }}>
+              <Lock size={13} color="var(--primary-emerald)" />
+              <span>Account Password</span>
+            </label>
             <input
               type="password"
-              className="chat-input"
-              style={{ width: "100%", marginTop: "0.25rem" }}
+              className="chat-text-input"
+              style={{ width: "100%", marginTop: "0.35rem", padding: "0.75rem 1rem" }}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••••••"
               required
             />
           </div>
 
-          <button type="submit" className="btn btn-primary" style={{ marginTop: "0.5rem" }} disabled={loading}>
-            <UserPlus size={18} /> {loading ? "Creating Account..." : "Register"}
+          <button 
+            type="submit" 
+            className="btn btn-primary" 
+            style={{ marginTop: "0.5rem", padding: "0.85rem" }} 
+            disabled={loading}
+          >
+            <UserPlus size={18} />
+            <span>{loading ? "Registering Citizen..." : "Complete Registration"}</span>
           </button>
         </form>
 
-        <div style={{ textAlign: "center", marginTop: "1.25rem", fontSize: "0.85rem", color: "#94a3b8" }}>
-          Already have an account? <Link to="/login">Log in here</Link>
+        <div style={{ textAlign: "center", marginTop: "1.75rem", paddingTop: "1.25rem", borderTop: "1px solid var(--border-color)", fontSize: "0.88rem", color: "var(--text-secondary)" }}>
+          Already have an account? <Link to="/login" style={{ fontWeight: "700", color: "var(--primary-emerald)" }}>Sign In here</Link>
         </div>
       </div>
     </div>
