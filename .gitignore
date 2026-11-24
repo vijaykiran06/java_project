@@ -1,0 +1,53 @@
+# Dependencies & Virtualenvs
+node_modules/
+.venv/
+venv/
+ENV/
+env/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Testing & Coverage
+coverage/
+.benchmarks/
+
+# Production Build & Compilation
+dist/
+build/
+target/
+*.class
+*.jar
+*.war
+
+# Environment files & Secrets (Strictly Excluded)
+.env
+.env.local
+.env.*.local
+backend-java/.env
+backend-java/.env.*
+*.env
+
+# Database journals & temp files
+*.db-journal
+
+# IDE & Editor files
+.idea/
+*.iml
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS & Logs
+.DS_Store
+Thumbs.db
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
