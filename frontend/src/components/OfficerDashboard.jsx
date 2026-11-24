@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext, useMemo } from "react";
 import { AuthContext } from "../context/AuthContext";
 import GrievanceTimeline from "./GrievanceTimeline";
+import SLACountdownBadge from "./SLACountdownBadge";
 import { 
   CheckCircle2, 
   Clock, 
@@ -20,7 +21,9 @@ import {
   LayoutGrid,
   List,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  FileCheck2,
+  Check
 } from "lucide-react";
 
 export default function OfficerDashboard() {
@@ -30,6 +33,8 @@ export default function OfficerDashboard() {
   const [selectedGrievance, setSelectedGrievance] = useState(null);
   const [history, setHistory] = useState([]);
   const [notesText, setNotesText] = useState("");
+  const [resolutionSummary, setResolutionSummary] = useState("");
+  const [workPerformed, setWorkPerformed] = useState("");
   const [newStatus, setNewStatus] = useState("IN_PROGRESS");
   const [submittingStatus, setSubmittingStatus] = useState(false);
 
@@ -77,23 +82,53 @@ export default function OfficerDashboard() {
   const handleUpdateStatus = async (e) => {
     e.preventDefault();
     if (!selectedGrievance) return;
+
+    if (newStatus === "RESOLVED") {
+      if (!resolutionSummary.trim()) {
+        alert("Please enter a resolution summary describing how the issue was resolved.");
+        return;
+      }
+      if (!workPerformed.trim()) {
+        alert("Please enter details of the work performed on-site.");
+        return;
+      }
+    }
+
     setSubmittingStatus(true);
 
     try {
-      const res = await fetch(`/api/grievances/${selectedGrievance.id}/status`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          status: newStatus,
-          notes: notesText || `Officer ${user?.name || ''} updated status to ${newStatus}`,
-        }),
-      });
+      let res;
+      if (newStatus === "RESOLVED") {
+        res = await fetch(`/api/grievances/${selectedGrievance.id}/resolve`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            resolution_summary: resolutionSummary.trim(),
+            work_performed: workPerformed.trim(),
+            notes: notesText || `Resolved by officer ${user?.name || ''}`,
+          }),
+        });
+      } else {
+        res = await fetch(`/api/grievances/${selectedGrievance.id}/status`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            status: newStatus,
+            notes: notesText || `Officer ${user?.name || ''} updated status to ${newStatus}`,
+          }),
+        });
+      }
 
       if (res.ok) {
         setNotesText("");
+        setResolutionSummary("");
+        setWorkPerformed("");
         await fetchOfficerGrievances();
         // Refresh details for current selection
         const updatedRes = await fetch(`/api/grievances/${selectedGrievance.id}`, {
@@ -105,9 +140,13 @@ export default function OfficerDashboard() {
           setHistory(uData.history || []);
         }
         alert(`Grievance status successfully updated to ${newStatus}`);
+      } else {
+        const err = await res.json();
+        alert(err.message || "Failed to update status");
       }
     } catch (e) {
       console.error(e);
+      alert("Error submitting update");
     } finally {
       setSubmittingStatus(false);
     }
@@ -320,6 +359,7 @@ export default function OfficerDashboard() {
                     <th>Location</th>
                     <th>Priority</th>
                     <th>Status</th>
+                    <th>24h SLA Countdown</th>
                     <th>Date</th>
                     <th>Action</th>
                   </tr>
@@ -341,7 +381,7 @@ export default function OfficerDashboard() {
                       </td>
                       <td>
                         <div style={{ fontWeight: "700", color: "var(--deep-navy)" }}>{g.category}</div>
-                        <div style={{ fontSize: "0.8rem", color: "var(--text-secondary)", maxWidth: "260px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        <div style={{ fontSize: "0.8rem", color: "var(--text-secondary)", maxWidth: "240px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                           {g.description}
                         </div>
                       </td>
@@ -363,6 +403,14 @@ export default function OfficerDashboard() {
                           <span className="badge-dot"></span>
                           <span>{g.status}</span>
                         </span>
+                      </td>
+                      <td>
+                        <SLACountdownBadge 
+                          slaDeadline={g.sla_deadline} 
+                          status={g.status} 
+                          slaStatus={g.sla_status} 
+                          compact={true} 
+                        />
                       </td>
                       <td style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>
                         {new Date(g.created_at).toLocaleDateString([], { month: "short", day: "numeric" })}
@@ -464,8 +512,27 @@ export default function OfficerDashboard() {
               </button>
             </div>
 
+            {/* 24-Hour SLA Banner */}
+            <div style={{ padding: "0.85rem 1rem", backgroundColor: "var(--bg-subtle)", borderRadius: "8px", border: "1px solid var(--border-color)", margin: "1rem 0", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.5rem" }}>
+              <div>
+                <div style={{ fontSize: "0.72rem", textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--text-secondary)", fontWeight: "700" }}>
+                  24-Hour Resolution SLA
+                </div>
+                <div style={{ fontSize: "0.78rem", color: "var(--deep-navy)", marginTop: "0.15rem" }}>
+                  {selectedGrievance.sla_deadline 
+                    ? `Target: ${new Date(selectedGrievance.sla_deadline).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}`
+                    : "Standard 24h Window"}
+                </div>
+              </div>
+              <SLACountdownBadge 
+                slaDeadline={selectedGrievance.sla_deadline} 
+                status={selectedGrievance.status} 
+                slaStatus={selectedGrievance.sla_status} 
+              />
+            </div>
+
             {/* Complaint Info */}
-            <div style={{ margin: "1.25rem 0" }}>
+            <div style={{ margin: "1rem 0" }}>
               <div style={{ fontSize: "0.74rem", textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--text-secondary)", fontWeight: "700" }}>
                 Assigned Grievance
               </div>
@@ -513,10 +580,46 @@ export default function OfficerDashboard() {
                 >
                   <option value="ACKNOWLEDGED">ACKNOWLEDGED (Official Received)</option>
                   <option value="IN_PROGRESS">IN_PROGRESS (Fieldwork Ongoing)</option>
-                  <option value="RESOLVED">RESOLVED (Work Completed)</option>
+                  <option value="RESOLVED">RESOLVED (Complete Resolution & Close)</option>
                   <option value="REJECTED">REJECTED (Non-jurisdictional / Ineligible)</option>
                 </select>
               </div>
+
+              {newStatus === "RESOLVED" && (
+                <div style={{ backgroundColor: "#F0FDF4", border: "1px solid #BBF7D0", padding: "0.85rem", borderRadius: "8px", marginBottom: "0.85rem" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", fontSize: "0.82rem", fontWeight: "700", color: "#166534", marginBottom: "0.5rem" }}>
+                    <FileCheck2 size={15} />
+                    <span>Resolution Verification Details (Mandatory)</span>
+                  </div>
+
+                  <div style={{ marginBottom: "0.6rem" }}>
+                    <label style={{ fontSize: "0.72rem", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.05em", color: "#15803D", display: "block" }}>
+                      Resolution Summary <span style={{ color: "#DC2626" }}>*</span>
+                    </label>
+                    <input
+                      type="text"
+                      className="chat-text-input"
+                      style={{ width: "100%", marginTop: "0.2rem", padding: "0.5rem 0.75rem", fontSize: "0.85rem" }}
+                      placeholder="e.g. Main water valve replaced, leak resolved"
+                      value={resolutionSummary}
+                      onChange={(e) => setResolutionSummary(e.target.value)}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: "0.72rem", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.05em", color: "#15803D", display: "block" }}>
+                      Work Performed Details <span style={{ color: "#DC2626" }}>*</span>
+                    </label>
+                    <textarea
+                      className="chat-text-input"
+                      style={{ width: "100%", height: "60px", marginTop: "0.2rem", padding: "0.5rem 0.75rem", fontSize: "0.85rem", resize: "vertical" }}
+                      placeholder="Describe steps taken, replacement components, test checks..."
+                      value={workPerformed}
+                      onChange={(e) => setWorkPerformed(e.target.value)}
+                    />
+                  </div>
+                </div>
+              )}
 
               <div style={{ marginBottom: "1rem" }}>
                 <label style={{ fontSize: "0.74rem", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--text-secondary)" }}>
@@ -524,7 +627,7 @@ export default function OfficerDashboard() {
                 </label>
                 <textarea
                   className="chat-text-input"
-                  style={{ width: "100%", height: "70px", marginTop: "0.3rem", padding: "0.6rem 0.8rem", fontSize: "0.88rem", resize: "vertical" }}
+                  style={{ width: "100%", height: "65px", marginTop: "0.3rem", padding: "0.6rem 0.8rem", fontSize: "0.88rem", resize: "vertical" }}
                   placeholder="Record work details (e.g. 'Inspected pipeline, valve replaced')..."
                   value={notesText}
                   onChange={(e) => setNotesText(e.target.value)}
@@ -538,7 +641,7 @@ export default function OfficerDashboard() {
                 disabled={submittingStatus}
               >
                 <Send size={15} />
-                <span>{submittingStatus ? "Recording Update..." : "Submit Status Update"}</span>
+                <span>{submittingStatus ? "Recording Update..." : (newStatus === "RESOLVED" ? "Submit Official Resolution" : "Submit Status Update")}</span>
               </button>
             </form>
 

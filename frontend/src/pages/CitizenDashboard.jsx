@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext, useMemo } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { Link } from "react-router-dom";
 import GrievanceTimeline from "../components/GrievanceTimeline";
+import SLACountdownBadge from "../components/SLACountdownBadge";
 import { 
   PlusCircle, 
   MapPin, 
@@ -20,7 +21,11 @@ import {
   Building2,
   Sparkles,
   ExternalLink,
-  X
+  X,
+  UserCheck,
+  Phone,
+  FileCheck2,
+  RotateCcw
 } from "lucide-react";
 
 export default function CitizenDashboard() {
@@ -31,6 +36,9 @@ export default function CitizenDashboard() {
   const [history, setHistory] = useState([]);
   const [verifyReason, setVerifyReason] = useState("");
   const [submittingVerification, setSubmittingVerification] = useState(false);
+  const [reopenModalOpen, setReopenModalOpen] = useState(false);
+  const [reopenReasonText, setReopenReasonText] = useState("");
+  const [submittingReopen, setSubmittingReopen] = useState(false);
 
   // Search & Filter state
   const [searchTerm, setSearchTerm] = useState("");
@@ -103,6 +111,40 @@ export default function CitizenDashboard() {
       console.error(e);
     } finally {
       setSubmittingVerification(false);
+    }
+  };
+
+  const handleReopenGrievance = async () => {
+    if (!selectedGrievance || !reopenReasonText.trim()) {
+      alert("Please enter a valid reason for reopening.");
+      return;
+    }
+    setSubmittingReopen(true);
+    try {
+      const res = await fetch(`/api/grievances/${selectedGrievance.id}/reopen`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ reason: reopenReasonText.trim() }),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        alert("Grievance reopened successfully. A fresh 24-hour resolution SLA cycle has started.");
+        setReopenModalOpen(false);
+        setReopenReasonText("");
+        await fetchGrievances();
+        handleOpenDetail(updated);
+      } else {
+        const err = await res.json();
+        alert(err.message || "Failed to reopen grievance");
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Error reopening grievance");
+    } finally {
+      setSubmittingReopen(false);
     }
   };
 
@@ -384,12 +426,18 @@ export default function CitizenDashboard() {
                         </div>
                       </div>
 
-                      {/* Department Tag */}
-                      <div style={{ margin: "0.6rem 0 0.4rem" }}>
+                      {/* Department Tag & SLA Badge */}
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.5rem", flexWrap: "wrap", margin: "0.6rem 0 0.4rem" }}>
                         <span className="dept-tag">
                           <Building2 size={12} />
                           <span>{g.department || "Municipal Administration"}</span>
                         </span>
+                        <SLACountdownBadge 
+                          slaDeadline={g.sla_deadline} 
+                          status={g.status} 
+                          slaStatus={g.sla_status} 
+                          compact={true} 
+                        />
                       </div>
 
                       {/* Category & Description */}
@@ -399,6 +447,14 @@ export default function CitizenDashboard() {
                       <p className="card-desc" style={{ marginTop: "0.4rem" }}>
                         {g.description}
                       </p>
+
+                      {/* Assigned Worker / Official Badge */}
+                      {(g.assigned_worker_name || g.officer_name) && (
+                        <div style={{ marginTop: "0.5rem", display: "inline-flex", alignItems: "center", gap: "0.35rem", fontSize: "0.78rem", color: "var(--deep-navy)", backgroundColor: "var(--bg-subtle)", padding: "0.25rem 0.5rem", borderRadius: "5px" }}>
+                          <UserCheck size={12} color="var(--primary-emerald)" />
+                          <span>Assigned: <strong>{g.assigned_worker_name || g.officer_name}</strong></span>
+                        </div>
+                      )}
                     </div>
 
                     {/* Bottom Metadata Row */}
@@ -441,8 +497,10 @@ export default function CitizenDashboard() {
                     <th>Tracking ID</th>
                     <th>Category</th>
                     <th>Department</th>
+                    <th>Assigned Official</th>
                     <th>Priority</th>
                     <th>Status</th>
+                    <th>24h SLA Countdown</th>
                     <th>Date</th>
                     <th>Action</th>
                   </tr>
@@ -461,7 +519,7 @@ export default function CitizenDashboard() {
                       </td>
                       <td>
                         <div style={{ fontWeight: "600" }}>{g.category}</div>
-                        <div style={{ fontSize: "0.78rem", color: "var(--text-secondary)", maxWidth: "200px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        <div style={{ fontSize: "0.78rem", color: "var(--text-secondary)", maxWidth: "180px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                           {g.description}
                         </div>
                       </td>
@@ -469,6 +527,16 @@ export default function CitizenDashboard() {
                         <span className="dept-tag">
                           {g.department}
                         </span>
+                      </td>
+                      <td>
+                        {g.assigned_worker_name || g.officer_name ? (
+                          <div style={{ display: "flex", alignItems: "center", gap: "0.3rem", fontSize: "0.82rem", fontWeight: "600", color: "var(--deep-navy)" }}>
+                            <UserCheck size={13} color="var(--primary-emerald)" />
+                            <span>{g.assigned_worker_name || g.officer_name}</span>
+                          </div>
+                        ) : (
+                          <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>Unassigned</span>
+                        )}
                       </td>
                       <td>
                         <span className={`badge ${getPriorityBadgeClass(g.priority)}`}>
@@ -480,6 +548,14 @@ export default function CitizenDashboard() {
                           <span className="badge-dot"></span>
                           <span>{g.status}</span>
                         </span>
+                      </td>
+                      <td>
+                        <SLACountdownBadge 
+                          slaDeadline={g.sla_deadline} 
+                          status={g.status} 
+                          slaStatus={g.sla_status} 
+                          compact={true} 
+                        />
                       </td>
                       <td style={{ fontSize: "0.82rem", color: "var(--text-secondary)" }}>
                         {new Date(g.created_at).toLocaleDateString([], { month: "short", day: "numeric" })}
@@ -526,6 +602,102 @@ export default function CitizenDashboard() {
                 <X size={16} />
               </button>
             </div>
+
+            {/* 24-Hour SLA Banner */}
+            <div style={{ padding: "0.85rem 1rem", backgroundColor: "var(--bg-subtle)", borderRadius: "8px", border: "1px solid var(--border-color)", margin: "1rem 0", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.5rem" }}>
+              <div>
+                <div style={{ fontSize: "0.72rem", textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--text-secondary)", fontWeight: "700" }}>
+                  24-Hour Resolution SLA
+                </div>
+                <div style={{ fontSize: "0.78rem", color: "var(--deep-navy)", marginTop: "0.15rem" }}>
+                  {selectedGrievance.sla_deadline 
+                    ? `Target: ${new Date(selectedGrievance.sla_deadline).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}`
+                    : "Standard 24h Window"}
+                </div>
+              </div>
+              <SLACountdownBadge 
+                slaDeadline={selectedGrievance.sla_deadline} 
+                status={selectedGrievance.status} 
+                slaStatus={selectedGrievance.sla_status} 
+              />
+            </div>
+
+            {/* Assigned Official Card */}
+            {(selectedGrievance.assigned_worker_name || selectedGrievance.officer_name) && (
+              <div style={{ marginBottom: "1.25rem", padding: "0.85rem 1rem", backgroundColor: "#F0FDF4", borderRadius: "8px", border: "1px solid #BBF7D0" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", fontSize: "0.88rem", fontWeight: "700", color: "#166534" }}>
+                    <UserCheck size={16} />
+                    <span>Assigned Field Official</span>
+                  </div>
+                  <span style={{ fontSize: "0.72rem", padding: "0.2rem 0.5rem", borderRadius: "4px", backgroundColor: "#DCFCE7", color: "#15803D", fontWeight: "600" }}>
+                    Active Assignment
+                  </span>
+                </div>
+
+                <div style={{ marginTop: "0.45rem", fontSize: "0.92rem", fontWeight: "700", color: "#142B45" }}>
+                  {selectedGrievance.assigned_worker_name || selectedGrievance.officer_name}
+                </div>
+                <div style={{ fontSize: "0.8rem", color: "#15803D", marginTop: "0.1rem" }}>
+                  {selectedGrievance.department}
+                </div>
+
+                {selectedGrievance.assigned_worker_phone && (
+                  <div style={{ marginTop: "0.45rem" }}>
+                    <a 
+                      href={`tel:${selectedGrievance.assigned_worker_phone}`} 
+                      style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem", fontSize: "0.82rem", color: "#047857", fontWeight: "600", textDecoration: "none" }}
+                    >
+                      <Phone size={13} /> Call Official ({selectedGrievance.assigned_worker_phone})
+                    </a>
+                  </div>
+                )}
+
+                {selectedGrievance.assignment_notes && (
+                  <div style={{ marginTop: "0.45rem", fontSize: "0.8rem", color: "#374151", backgroundColor: "rgba(255,255,255,0.7)", padding: "0.4rem 0.6rem", borderRadius: "4px", border: "1px solid rgba(0,0,0,0.05)" }}>
+                    <span style={{ fontWeight: "600" }}>Instructions: </span>
+                    <span>{selectedGrievance.assignment_notes}</span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Resolution Report Card (if resolved or closed) */}
+            {["RESOLVED", "CITIZEN_VERIFIED", "CLOSED"].includes(selectedGrievance.status) && (
+              <div style={{ marginBottom: "1.25rem", padding: "0.9rem 1rem", backgroundColor: "#EFF6FF", borderRadius: "8px", border: "1px solid #BFDBFE" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", fontSize: "0.9rem", fontWeight: "700", color: "#1E40AF" }}>
+                  <FileCheck2 size={16} />
+                  <span>Field Resolution Report</span>
+                </div>
+                <div style={{ marginTop: "0.45rem", fontSize: "0.85rem", color: "#1E3A8A", lineHeight: "1.4" }}>
+                  <strong>Summary: </strong>
+                  <span>{selectedGrievance.resolution_summary || selectedGrievance.resolution_notes || "Field works inspected and completed."}</span>
+                </div>
+                {selectedGrievance.work_performed && (
+                  <div style={{ marginTop: "0.4rem", fontSize: "0.83rem", color: "#1E3A8A", lineHeight: "1.4" }}>
+                    <strong>Work Performed: </strong>
+                    <span>{selectedGrievance.work_performed}</span>
+                  </div>
+                )}
+                {selectedGrievance.resolved_at && (
+                  <div style={{ marginTop: "0.5rem", fontSize: "0.78rem", color: "#64748B", display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                    <Clock size={12} />
+                    <span>Completed on {new Date(selectedGrievance.resolved_at).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
+                  </div>
+                )}
+
+                {/* Citizen Reopen Trigger */}
+                {selectedGrievance.status === "CITIZEN_VERIFIED" && (
+                  <button 
+                    onClick={() => setReopenModalOpen(true)}
+                    className="btn btn-outline btn-sm"
+                    style={{ marginTop: "0.75rem", width: "100%", borderColor: "#BFDBFE", color: "#1E40AF" }}
+                  >
+                    <RotateCcw size={13} /> Reopen Grievance If Problem Persists
+                  </button>
+                )}
+              </div>
+            )}
 
             {/* Case Information */}
             <div style={{ margin: "1.25rem 0" }}>
@@ -622,6 +794,60 @@ export default function CitizenDashboard() {
           </div>
         )}
       </div>
+
+      {/* Citizen Reopen Case Modal */}
+      {reopenModalOpen && (
+        <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(15, 23, 42, 0.6)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" }}>
+          <div style={{ backgroundColor: "#FFFFFF", borderRadius: "12px", width: "100%", maxWidth: "480px", padding: "1.5rem", boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", color: "#B45309", fontWeight: "700", fontSize: "1.05rem" }}>
+                <RotateCcw size={18} />
+                <span>Reopen Grievance</span>
+              </div>
+              <button onClick={() => setReopenModalOpen(false)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-secondary)" }}>
+                <X size={18} />
+              </button>
+            </div>
+
+            <p style={{ fontSize: "0.86rem", color: "var(--text-secondary)", marginBottom: "1rem", lineHeight: "1.5" }}>
+              Reopening ticket <strong>{selectedGrievance?.tracking_number}</strong> will reset the case to active status and initiate a fresh <strong>24-Hour Resolution SLA</strong> with department supervisors.
+            </p>
+
+            <div style={{ marginBottom: "1.25rem" }}>
+              <label style={{ display: "block", fontSize: "0.82rem", fontWeight: "600", color: "var(--deep-navy)", marginBottom: "0.4rem" }}>
+                Reason for Reopening <span style={{ color: "#DC2626" }}>*</span>
+              </label>
+              <textarea
+                rows={3}
+                className="chat-text-input"
+                placeholder="Describe why the issue persists or what further work is required..."
+                value={reopenReasonText}
+                onChange={(e) => setReopenReasonText(e.target.value)}
+                style={{ width: "100%", fontSize: "0.85rem", padding: "0.6rem 0.8rem", resize: "vertical" }}
+              />
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.75rem" }}>
+              <button 
+                type="button" 
+                onClick={() => setReopenModalOpen(false)}
+                className="btn btn-outline btn-sm"
+              >
+                Cancel
+              </button>
+              <button 
+                type="button" 
+                onClick={handleReopenGrievance}
+                disabled={submittingReopen || !reopenReasonText.trim()}
+                className="btn btn-primary btn-sm"
+                style={{ backgroundColor: "#D97706", borderColor: "#B45309" }}
+              >
+                {submittingReopen ? "Reopening..." : "Confirm & Reopen Case"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

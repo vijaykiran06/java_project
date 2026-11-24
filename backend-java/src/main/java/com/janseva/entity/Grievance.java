@@ -110,6 +110,42 @@ public class Grievance extends TimestampedEntity {
     @JsonProperty("updated_at")
     private String updatedAt;
 
+    @Column(name = "assigned_by")
+    @JsonProperty("assigned_by")
+    private Long assignedBy;
+
+    @Column(name = "assigned_at")
+    @JsonProperty("assigned_at")
+    private String assignedAt;
+
+    @Column(name = "assignment_notes")
+    @JsonProperty("assignment_notes")
+    private String assignmentNotes;
+
+    @Column(name = "sla_status")
+    @JsonProperty("sla_status")
+    private String slaStatus = "WITHIN_SLA";
+
+    @Column(name = "sla_breached_at")
+    @JsonProperty("sla_breached_at")
+    private String slaBreachedAt;
+
+    @Column(name = "resolved_by")
+    @JsonProperty("resolved_by")
+    private Long resolvedBy;
+
+    @Column(name = "resolution_summary")
+    @JsonProperty("resolution_summary")
+    private String resolutionSummary;
+
+    @Column(name = "work_performed")
+    @JsonProperty("work_performed")
+    private String workPerformed;
+
+    @Column(name = "actual_resolution_duration")
+    @JsonProperty("actual_resolution_duration")
+    private Long actualResolutionDuration;
+
     public Grievance() {}
 
     @PrePersist
@@ -208,4 +244,31 @@ public class Grievance extends TimestampedEntity {
 
     public String getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(String updatedAt) { this.updatedAt = updatedAt; }
+
+    public Long getAssignedBy() { return assignedBy; }
+    public void setAssignedBy(Long assignedBy) { this.assignedBy = assignedBy; }
+
+    public String getAssignedAt() { return assignedAt; }
+    public void setAssignedAt(String assignedAt) { this.assignedAt = assignedAt; }
+
+    public String getAssignmentNotes() { return assignmentNotes; }
+    public void setAssignmentNotes(String assignmentNotes) { this.assignmentNotes = assignmentNotes; }
+
+    public String getSlaStatus() { return slaStatus; }
+    public void setSlaStatus(String slaStatus) { this.slaStatus = slaStatus; }
+
+    public String getSlaBreachedAt() { return slaBreachedAt; }
+    public void setSlaBreachedAt(String slaBreachedAt) { this.slaBreachedAt = slaBreachedAt; }
+
+    public Long getResolvedBy() { return resolvedBy; }
+    public void setResolvedBy(Long resolvedBy) { this.resolvedBy = resolvedBy; }
+
+    public String getResolutionSummary() { return resolutionSummary; }
+    public void setResolutionSummary(String resolutionSummary) { this.resolutionSummary = resolutionSummary; }
+
+    public String getWorkPerformed() { return workPerformed; }
+    public void setWorkPerformed(String workPerformed) { this.workPerformed = workPerformed; }
+
+    public Long getActualResolutionDuration() { return actualResolutionDuration; }
+    public void setActualResolutionDuration(Long actualResolutionDuration) { this.actualResolutionDuration = actualResolutionDuration; }
 }

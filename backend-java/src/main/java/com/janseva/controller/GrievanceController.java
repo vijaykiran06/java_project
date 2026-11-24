@@ -4,6 +4,9 @@ import com.janseva.dto.GrievanceDtos.CreateGrievanceRequest;
 import com.janseva.dto.GrievanceDtos.CreateGrievanceResponse;
 import com.janseva.dto.GrievanceDtos.GrievanceDetailResponse;
 import com.janseva.dto.GrievanceDtos.GrievanceListResponse;
+import com.janseva.dto.GrievanceDtos.GrievanceView;
+import com.janseva.dto.GrievanceDtos.ReopenGrievanceRequest;
+import com.janseva.dto.GrievanceDtos.ResolveGrievanceRequest;
 import com.janseva.dto.GrievanceDtos.StatusUpdateResponse;
 import com.janseva.dto.GrievanceDtos.UpdateStatusRequest;
 import com.janseva.dto.GrievanceDtos.VerifyRequest;
@@ -68,5 +71,23 @@ public class GrievanceController {
             @RequestBody VerifyRequest request,
             @AuthenticationPrincipal CustomUserDetails principal) {
         return ResponseEntity.ok(grievanceService.verifyResolution(id, request, principal.getUser()));
+    }
+
+    @PostMapping("/{id}/resolve")
+    @PreAuthorize("hasAnyRole('OFFICER', 'DEPARTMENT_ADMIN', 'SUPER_ADMIN')")
+    public ResponseEntity<GrievanceView> resolve(
+            @PathVariable("id") Long id,
+            @RequestBody ResolveGrievanceRequest request,
+            @AuthenticationPrincipal CustomUserDetails principal) {
+        return ResponseEntity.ok(grievanceService.resolveGrievance(id, request, principal.getUser()));
+    }
+
+    @PostMapping("/{id}/reopen")
+    public ResponseEntity<GrievanceView> reopen(
+            @PathVariable("id") Long id,
+            @RequestBody(required = false) ReopenGrievanceRequest request,
+            @AuthenticationPrincipal CustomUserDetails principal) {
+        String reason = request != null ? request.reason() : "Reopened by user";
+        return ResponseEntity.ok(grievanceService.reopenGrievance(id, reason, principal.getUser()));
     }
 }

@@ -27,6 +27,42 @@ public final class GrievanceDtos {
 
     public record VerifyRequest(Boolean verified, String reason) {}
 
+    public record AssignWorkerRequest(
+            @JsonProperty("worker_id") Long workerId,
+            String notes
+    ) {}
+
+    public record ResolveGrievanceRequest(
+            @JsonProperty("resolution_summary") String resolutionSummary,
+            @JsonProperty("work_performed") String workPerformed,
+            String notes
+    ) {}
+
+    public record ReopenGrievanceRequest(
+            String reason
+    ) {}
+
+    public record WorkerWorkloadView(
+            Long id,
+            String name,
+            String email,
+            String role,
+            @JsonProperty("department_id") Long departmentId,
+            @JsonProperty("department_name") String departmentName,
+            String phone,
+            String zone,
+            @JsonProperty("active_cases") long activeCases
+    ) {}
+
+    public record SlaMonitoringOverview(
+            @JsonProperty("total_active") long totalActive,
+            @JsonProperty("within_sla") long withinSla,
+            @JsonProperty("approaching_deadline") long approachingDeadline,
+            @JsonProperty("critical_due_soon") long criticalDueSoon,
+            @JsonProperty("urgent") long urgent,
+            @JsonProperty("breached") long breached
+    ) {}
+
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class GrievanceView {
         public Long id;
@@ -61,8 +97,25 @@ public final class GrievanceDtos {
         @JsonProperty("updated_at") public String updatedAt;
         @JsonProperty("citizen_name") public String citizenName;
         @JsonProperty("officer_name") public String officerName;
+        @JsonProperty("assigned_by") public Long assignedBy;
+        @JsonProperty("assigned_at") public String assignedAt;
+        @JsonProperty("assignment_notes") public String assignmentNotes;
+        @JsonProperty("sla_status") public String slaStatus;
+        @JsonProperty("sla_breached_at") public String slaBreachedAt;
+        @JsonProperty("resolved_by") public Long resolvedBy;
+        @JsonProperty("resolution_summary") public String resolutionSummary;
+        @JsonProperty("work_performed") public String workPerformed;
+        @JsonProperty("actual_resolution_duration") public Long actualResolutionDuration;
+        @JsonProperty("assigned_worker_name") public String assignedWorkerName;
+        @JsonProperty("assigned_worker_phone") public String assignedWorkerPhone;
+        @JsonProperty("assigned_worker_email") public String assignedWorkerEmail;
 
         public static GrievanceView from(Grievance g, String citizenName, String officerName) {
+            return from(g, citizenName, officerName, null, null, null);
+        }
+
+        public static GrievanceView from(Grievance g, String citizenName, String officerName,
+                                        String workerName, String workerPhone, String workerEmail) {
             GrievanceView v = new GrievanceView();
             v.id = g.getId();
             v.trackingNumber = g.getTrackingNumber();
@@ -96,6 +149,18 @@ public final class GrievanceDtos {
             v.updatedAt = g.getUpdatedAt();
             v.citizenName = citizenName;
             v.officerName = officerName;
+            v.assignedBy = g.getAssignedBy();
+            v.assignedAt = g.getAssignedAt();
+            v.assignmentNotes = g.getAssignmentNotes();
+            v.slaStatus = g.getSlaStatus();
+            v.slaBreachedAt = g.getSlaBreachedAt();
+            v.resolvedBy = g.getResolvedBy();
+            v.resolutionSummary = g.getResolutionSummary();
+            v.workPerformed = g.getWorkPerformed();
+            v.actualResolutionDuration = g.getActualResolutionDuration();
+            v.assignedWorkerName = workerName != null ? workerName : officerName;
+            v.assignedWorkerPhone = workerPhone;
+            v.assignedWorkerEmail = workerEmail;
             return v;
         }
     }

@@ -45,12 +45,12 @@ public class SlaService {
 
     @Transactional
     public String setSLAForGrievance(Long grievanceId, String priority) {
-        int hours = DomainConstants.DEFAULT_SLA_HOURS.getOrDefault(
-                priority != null ? priority : "MEDIUM", 48);
-        String deadline = Instant.now().plus(hours, ChronoUnit.HOURS).toString();
+        // Strict 24-Hour SLA Rule for all newly registered civic grievances
+        String deadline = Instant.now().plus(24, ChronoUnit.HOURS).toString();
 
         grievanceRepository.findById(grievanceId).ifPresent(g -> {
             g.setSlaDeadline(deadline);
+            g.setSlaStatus("WITHIN_SLA");
             grievanceRepository.save(g);
         });
         return deadline;
@@ -87,6 +87,10 @@ public class SlaService {
 
             g.setIsEscalated(1);
             g.setEscalationLevel(nextLevel);
+            g.setSlaStatus("SLA_BREACHED");
+            if (g.getSlaBreachedAt() == null) {
+                g.setSlaBreachedAt(nowIso);
+            }
             g.setStatus("ESCALATED");
             grievanceRepository.save(g);
 
@@ -94,7 +98,7 @@ public class SlaService {
             esc.setGrievanceId(g.getId());
             esc.setEscalatedFromOfficerId(g.getAssignedOfficerId());
             esc.setEscalatedToOfficerId(escOfficerId);
-            esc.setReason("SLA Breach: Officer failed to resolve within allocated timeframe");
+            esc.setReason("SLA Breach: 24-Hour resolution deadline exceeded");
             esc.setLevel(nextLevel);
             esc.setStatus("ESCALATED");
             escalationRepository.save(esc);
@@ -103,13 +107,60 @@ public class SlaService {
             hist.setGrievanceId(g.getId());
             hist.setPreviousStatus(prevStatus);
             hist.setNewStatus("ESCALATED");
-            hist.setNotes("AUTOMATIC SLA BREACH ESCALATION (Level " + nextLevel + ")");
+            hist.setNotes("AUTOMATIC 24H SLA BREACH ESCALATION (Level " + nextLevel + ")");
             historyRepository.save(hist);
 
-            log.info("AUTOMATIC SLA ESCALATION: Grievance {} escalated to Level {}",
+            log.info("AUTOMATIC 24H SLA ESCALATION: Grievance {} escalated to Level {}",
                     g.getTrackingNumber(), nextLevel);
         }
 
         return breached.size();
+    }
+
+    public com.janseva.dto.GrievanceDtos.SlaMonitoringOverview getSlaMonitoringOverview() {
+        Instant now = Instant.now();
+        List<Grievance> allActive = grievanceRepository.findAll().stream()
+                .filter(g -> !"RESOLVED".equals(g.getStatus()) && !"CITIZEN_VERIFIED".equals(g.getStatus())
+                        && !"CLOSED".equals(g.getStatus()) && !"REJECTED".equals(g.getStatus()))
+                .toList();
+
+        long withinSla = 0;
+        long approaching = 0;
+        long criticalDueSoon = 0;
+        long urgent = 0;
+        long breached = 0;
+
+        for (Grievance g : allActive) {
+            if (g.getSlaDeadline() == null) {
+                withinSla++;
+                continue;
+            }
+            try {
+                Instant deadline = Instant.parse(g.getSlaDeadline());
+                long minutesLeft = java.time.Duration.between(now, deadline).toMinutes();
+                if (minutesLeft <= 0) {
+                    breached++;
+                } else if (minutesLeft < 60) {
+                    urgent++;
+                } else if (minutesLeft < 360) { // 6 hours
+                    criticalDueSoon++;
+                } else if (minutesLeft < 720) { // 12 hours
+                    approaching++;
+                } else {
+                    withinSla++;
+                }
+            } catch (Exception e) {
+                withinSla++;
+            }
+        }
+
+        return new com.janseva.dto.GrievanceDtos.SlaMonitoringOverview(
+                allActive.size(),
+                withinSla,
+                approaching,
+                criticalDueSoon,
+                urgent,
+                breached
+        );
     }
 }
