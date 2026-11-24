@@ -87,23 +87,52 @@ export default function AdminDashboard() {
 
   const fetchDashboardData = async () => {
     try {
-      const [gRes, iRes] = await Promise.all([
-        fetch("/api/admin/grievances", {
+      setLoading(true);
+      // 1. Fetch Grievances with primary and fallback support
+      try {
+        let gRes = await fetch("/api/admin/grievances", {
           headers: { Authorization: `Bearer ${token}` },
-        }),
-        fetch("/api/incidents", {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-      ]);
-
-      if (gRes.ok) {
-        const gData = await gRes.json();
-        setGrievances(gData.grievances || []);
+        });
+        if (!gRes.ok) {
+          console.warn("Primary /api/admin/grievances returned " + gRes.status + ", falling back to /api/grievances");
+          gRes = await fetch("/api/grievances", {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+        }
+        if (gRes.ok) {
+          const gData = await gRes.json();
+          const list = Array.isArray(gData) ? gData : (gData?.grievances || gData?.data || []);
+          setGrievances(list);
+        } else {
+          console.error("Grievances fetch failed with HTTP status:", gRes.status);
+        }
+      } catch (gErr) {
+        console.error("Grievances fetch network error, trying fallback:", gErr);
+        try {
+          const fallbackRes = await fetch("/api/grievances", {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (fallbackRes.ok) {
+            const fallbackData = await fallbackRes.json();
+            const list = Array.isArray(fallbackData) ? fallbackData : (fallbackData?.grievances || fallbackData?.data || []);
+            setGrievances(list);
+          }
+        } catch (fErr) {
+          console.error("Fallback grievances fetch failed:", fErr);
+        }
       }
 
-      if (iRes.ok) {
-        const iData = await iRes.json();
-        setIncidents(iData.incidents || []);
+      // 2. Fetch Incidents independently so incident errors never block grievances
+      try {
+        const iRes = await fetch("/api/incidents", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (iRes.ok) {
+          const iData = await iRes.json();
+          setIncidents(iData.incidents || (Array.isArray(iData) ? iData : []));
+        }
+      } catch (iErr) {
+        console.warn("Incidents fetch error (non-fatal):", iErr);
       }
     } catch (e) {
       console.error("Dashboard fetch error:", e);
@@ -114,15 +143,20 @@ export default function AdminDashboard() {
 
   const fetchSlaOverview = async () => {
     try {
-      const res = await fetch("/api/admin/sla/monitoring", {
+      let res = await fetch("/api/admin/sla/monitoring", {
         headers: { Authorization: `Bearer ${token}` },
       });
+      if (!res.ok) {
+        res = await fetch("/api/sla/monitoring", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      }
       if (res.ok) {
         const data = await res.json();
         setSlaOverview(data);
       }
     } catch (e) {
-      console.error("SLA overview error:", e);
+      console.warn("SLA overview fetch notice:", e);
     }
   };
 
@@ -153,12 +187,17 @@ export default function AdminDashboard() {
     setLoadingWorkers(true);
 
     try {
-      const res = await fetch("/api/admin/workers/available", {
+      let res = await fetch("/api/admin/workers/available", {
         headers: { Authorization: `Bearer ${token}` },
       });
+      if (!res.ok) {
+        res = await fetch("/api/grievances/workers/available", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      }
       if (res.ok) {
         const workers = await res.json();
-        setAvailableWorkers(workers);
+        setAvailableWorkers(Array.isArray(workers) ? workers : (workers.workers || []));
       }
     } catch (err) {
       console.error("Fetch workers error:", err);
@@ -176,7 +215,7 @@ export default function AdminDashboard() {
     setSubmittingAssign(true);
 
     try {
-      const res = await fetch(`/api/admin/grievances/${assignModalGrievance.id}/assign`, {
+      let res = await fetch(`/api/admin/grievances/${assignModalGrievance.id}/assign`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -187,6 +226,19 @@ export default function AdminDashboard() {
           notes: assignmentNotes.trim(),
         }),
       });
+      if (!res.ok) {
+        res = await fetch(`/api/grievances/${assignModalGrievance.id}/assign`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            worker_id: Number(selectedWorkerId),
+            notes: assignmentNotes.trim(),
+          }),
+        });
+      }
 
       if (res.ok) {
         const updated = await res.json();
@@ -228,7 +280,7 @@ export default function AdminDashboard() {
     setSubmittingResolve(true);
 
     try {
-      const res = await fetch(`/api/admin/grievances/${resolveModalGrievance.id}/resolve`, {
+      let res = await fetch(`/api/admin/grievances/${resolveModalGrievance.id}/resolve`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -240,6 +292,20 @@ export default function AdminDashboard() {
           notes: resolutionNotes.trim(),
         }),
       });
+      if (!res.ok) {
+        res = await fetch(`/api/grievances/${resolveModalGrievance.id}/resolve`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            resolution_summary: resolutionSummary.trim(),
+            work_performed: workPerformed.trim(),
+            notes: resolutionNotes.trim(),
+          }),
+        });
+      }
 
       if (res.ok) {
         alert(`Grievance ${resolveModalGrievance.tracking_number} successfully marked as resolved.`);
@@ -273,7 +339,7 @@ export default function AdminDashboard() {
     setSubmittingReopen(true);
 
     try {
-      const res = await fetch(`/api/admin/grievances/${reopenModalGrievance.id}/reopen`, {
+      let res = await fetch(`/api/admin/grievances/${reopenModalGrievance.id}/reopen`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -281,6 +347,16 @@ export default function AdminDashboard() {
         },
         body: JSON.stringify({ reason: reopenReason.trim() }),
       });
+      if (!res.ok) {
+        res = await fetch(`/api/grievances/${reopenModalGrievance.id}/reopen`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ reason: reopenReason.trim() }),
+        });
+      }
 
       if (res.ok) {
         alert(`Grievance ${reopenModalGrievance.tracking_number} reopened. Fresh 24-hour SLA started.`);

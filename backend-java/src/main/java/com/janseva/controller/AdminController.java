@@ -7,6 +7,7 @@ import com.janseva.dto.GrievanceDtos.ReopenGrievanceRequest;
 import com.janseva.dto.GrievanceDtos.ResolveGrievanceRequest;
 import com.janseva.dto.GrievanceDtos.SlaMonitoringOverview;
 import com.janseva.dto.GrievanceDtos.WorkerWorkloadView;
+import com.janseva.entity.User;
 import com.janseva.security.CustomUserDetails;
 import com.janseva.service.GrievanceService;
 import com.janseva.service.SlaService;
@@ -24,7 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/admin")
-@PreAuthorize("hasAnyRole('SUPER_ADMIN', 'DEPARTMENT_ADMIN', 'OFFICER')")
+@PreAuthorize("hasAnyRole('SUPER_ADMIN', 'DEPARTMENT_ADMIN', 'OFFICER', 'ADMIN') or hasAnyAuthority('SUPER_ADMIN', 'DEPARTMENT_ADMIN', 'OFFICER', 'ADMIN', 'ROLE_SUPER_ADMIN', 'ROLE_ADMIN')")
 public class AdminController {
 
     private final GrievanceService grievanceService;
@@ -38,7 +39,8 @@ public class AdminController {
     @GetMapping("/grievances")
     public ResponseEntity<GrievanceListResponse> listAllGrievances(
             @AuthenticationPrincipal CustomUserDetails principal) {
-        return ResponseEntity.ok(grievanceService.listGrievances(principal.getUser()));
+        User actor = principal != null ? principal.getUser() : null;
+        return ResponseEntity.ok(grievanceService.listGrievances(actor));
     }
 
     @GetMapping("/workers/available")

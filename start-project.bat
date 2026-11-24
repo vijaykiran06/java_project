@@ -5,7 +5,11 @@ echo          STARTING JANSEVA AI FULL-STACK APPLICATION
 echo ========================================================
 echo.
 
-set "JAVA_HOME=C:\Program Files\Java\jdk-23"
+if exist "C:\Program Files\Java\jdk-23" (
+    set "JAVA_HOME=C:\Program Files\Java\jdk-23"
+) else (
+    set "JAVA_HOME=C:\Program Files\Java\jdk-26.0.2.1"
+)
 set "MAVEN_HOME=C:\Program Files\Apache\apache-maven-3.10.1"
 set "PATH=%JAVA_HOME%\bin;%MAVEN_HOME%\bin;%PATH%"
 

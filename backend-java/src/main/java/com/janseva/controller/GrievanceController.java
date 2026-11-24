@@ -1,5 +1,6 @@
 package com.janseva.controller;
 
+import com.janseva.dto.GrievanceDtos.AssignWorkerRequest;
 import com.janseva.dto.GrievanceDtos.CreateGrievanceRequest;
 import com.janseva.dto.GrievanceDtos.CreateGrievanceResponse;
 import com.janseva.dto.GrievanceDtos.GrievanceDetailResponse;
@@ -11,8 +12,10 @@ import com.janseva.dto.GrievanceDtos.StatusUpdateResponse;
 import com.janseva.dto.GrievanceDtos.UpdateStatusRequest;
 import com.janseva.dto.GrievanceDtos.VerifyRequest;
 import com.janseva.dto.GrievanceDtos.VerifyResponse;
+import com.janseva.dto.GrievanceDtos.WorkerWorkloadView;
 import com.janseva.security.CustomUserDetails;
 import com.janseva.service.GrievanceService;
+import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -23,6 +26,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -63,6 +67,23 @@ public class GrievanceController {
             @RequestBody UpdateStatusRequest request,
             @AuthenticationPrincipal CustomUserDetails principal) {
         return ResponseEntity.ok(grievanceService.updateStatus(id, request, principal.getUser()));
+    }
+
+    @GetMapping("/workers/available")
+    @PreAuthorize("hasAnyRole('OFFICER', 'DEPARTMENT_ADMIN', 'SUPER_ADMIN')")
+    public ResponseEntity<List<WorkerWorkloadView>> getAvailableWorkers(
+            @RequestParam(value = "departmentId", required = false) Long departmentId) {
+        return ResponseEntity.ok(grievanceService.getAvailableWorkers(departmentId));
+    }
+
+    @PostMapping("/{id}/assign")
+    @PreAuthorize("hasAnyRole('OFFICER', 'DEPARTMENT_ADMIN', 'SUPER_ADMIN')")
+    public ResponseEntity<GrievanceView> assignWorker(
+            @PathVariable("id") Long id,
+            @RequestBody AssignWorkerRequest request,
+            @AuthenticationPrincipal CustomUserDetails principal) {
+        GrievanceView updated = grievanceService.assignWorker(id, request.workerId(), request.notes(), principal.getUser());
+        return ResponseEntity.ok(updated);
     }
 
     @PostMapping("/{id}/verify")
