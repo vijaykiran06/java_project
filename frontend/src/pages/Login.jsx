@@ -1,7 +1,10 @@
 import React, { useState, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
-import { LogIn, UserCheck, Shield, Sparkles, MapPin, CheckCircle2, Lock, Mail, ArrowRight } from "lucide-react";
+import {
+  LogIn, UserCheck, Shield, Sparkles, MapPin,
+  CheckCircle2, Lock, Mail, ArrowRight, Zap
+} from "lucide-react";
 
 export default function Login() {
   const { login } = useContext(AuthContext);
@@ -42,117 +45,126 @@ export default function Login() {
   };
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", backgroundColor: "var(--bg-main)" }}>
-      {/* Left Side: Hero Administrative & Civic Governance Artwork */}
-      <div 
-        style={{ 
-          flex: 1.1, 
+    <div style={{ display: "flex", minHeight: "100vh", backgroundColor: "var(--bg-soft)" }}>
+      {/* ── LEFT PANEL ── */}
+      <div
+        className="hide-mobile"
+        style={{
+          flex: 1.1,
           position: "relative",
-          background: "linear-gradient(135deg, rgba(15, 29, 47, 0.95) 0%, rgba(5, 150, 105, 0.88) 100%), url('https://images.unsplash.com/photo-1596422846543-74c6fc1e004a?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80')",
-          backgroundSize: "cover",
-          backgroundPosition: "center",
+          background: "linear-gradient(145deg, #0F2027 0%, #1a3a28 55%, var(--green-forest) 100%)",
           display: "flex",
           flexDirection: "column",
           justifyContent: "space-between",
           padding: "3.5rem",
           color: "#FFFFFF",
+          overflow: "hidden",
         }}
-        className="hide-mobile"
       >
-        {/* Brand Header */}
-        <div style={{ display: "flex", alignItems: "center", gap: "0.85rem" }}>
-          <div style={{ background: "#FFFFFF", padding: "0.6rem", borderRadius: "12px", color: "var(--primary-emerald)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 14px rgba(0,0,0,0.2)" }}>
-            <Shield size={28} strokeWidth={2.5} />
+        {/* Background texture */}
+        <div style={{
+          position: "absolute", inset: 0,
+          backgroundImage: "url('https://images.unsplash.com/photo-1529688264445-5b48bfe33ede?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80')",
+          backgroundSize: "cover", backgroundPosition: "center", opacity: 0.08
+        }} />
+
+        {/* Grid overlay */}
+        <div style={{
+          position: "absolute", inset: 0,
+          backgroundImage: "linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)",
+          backgroundSize: "40px 40px"
+        }} />
+
+        {/* Brand */}
+        <div style={{ position: "relative", display: "flex", alignItems: "center", gap: "0.85rem" }}>
+          <div style={{ background: "var(--green-primary)", padding: "0.65rem", borderRadius: "12px", display: "flex", boxShadow: "var(--shadow-green-lg)" }}>
+            <Shield size={26} strokeWidth={2.5} />
           </div>
           <div>
-            <h1 style={{ fontSize: "1.75rem", fontWeight: "800", color: "#FFFFFF", letterSpacing: "-0.02em" }}>
-              JanSeva <span style={{ color: "#A7F3D0" }}>AI</span>
-            </h1>
-            <div style={{ fontSize: "0.75rem", color: "#E2E8F0", textTransform: "uppercase", letterSpacing: "0.06em", fontWeight: "600" }}>
+            <div style={{ fontSize: "1.5rem", fontWeight: 800, fontFamily: "var(--font-heading)", letterSpacing: "-0.03em" }}>
+              JanSeva <span style={{ color: "#86EFAC" }}>AI</span>
+            </div>
+            <div style={{ fontSize: "0.68rem", color: "rgba(255,255,255,0.6)", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 700 }}>
               Unified Civic Grievance Portal
             </div>
           </div>
         </div>
 
-        {/* Hero Mission Statement */}
-        <div style={{ maxWidth: "620px" }}>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", padding: "0.35rem 0.85rem", backgroundColor: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.25)", borderRadius: "9999px", fontSize: "0.75rem", fontWeight: "700", color: "#A7F3D0", marginBottom: "1.25rem" }}>
-            <Sparkles size={13} />
-            <span>Smart India Hackathon 2026 Initiative</span>
+        {/* Hero text */}
+        <div style={{ position: "relative", maxWidth: "580px" }}>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", padding: "0.35rem 0.9rem", background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.18)", borderRadius: "9999px", fontSize: "0.75rem", fontWeight: 700, color: "#A7F3D0", marginBottom: "1.5rem" }}>
+            <Sparkles size={12} />
+            Smart India Hackathon 2026 Initiative
           </div>
 
-          <h2 style={{ fontSize: "2.8rem", fontWeight: "800", lineHeight: "1.15", marginBottom: "1.25rem", color: "#FFFFFF", letterSpacing: "-0.03em" }}>
+          <h2 style={{ fontSize: "2.75rem", fontWeight: 800, lineHeight: 1.12, marginBottom: "1.25rem", letterSpacing: "-0.035em", fontFamily: "var(--font-heading)" }}>
             Empowering Citizens.<br />
-            Transforming Civic Care.
+            <span style={{ color: "#86EFAC" }}>Transforming</span><br />
+            Civic Care.
           </h2>
 
-          <p style={{ fontSize: "1.1rem", color: "#E2E8F0", lineHeight: "1.65", marginBottom: "2.25rem" }}>
-            Report municipal concerns in natural English or Hindi. On-device local AI parses complaints, identifies priority, and directly assigns field work orders to the responsible municipal department within seconds.
+          <p style={{ fontSize: "1rem", color: "rgba(255,255,255,0.75)", lineHeight: 1.65, marginBottom: "2.5rem" }}>
+            Report municipal concerns in natural English or Hindi. Local AI parses, classifies, and routes your complaint to the right department within seconds.
           </p>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1rem" }}>
-            <div style={{ background: "rgba(255,255,255,0.12)", backdropFilter: "blur(12px)", padding: "1.25rem", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.18)" }}>
-              <div style={{ fontSize: "1.6rem", fontWeight: "800", color: "#A7F3D0" }}>100%</div>
-              <div style={{ fontSize: "0.82rem", color: "#E2E8F0", marginTop: "0.2rem" }}>Local ML Privacy & Zero Cloud Dependency</div>
-            </div>
-
-            <div style={{ background: "rgba(255,255,255,0.12)", backdropFilter: "blur(12px)", padding: "1.25rem", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.18)" }}>
-              <div style={{ fontSize: "1.6rem", fontWeight: "800", color: "#A7F3D0" }}>&lt; 30s</div>
-              <div style={{ fontSize: "0.82rem", color: "#E2E8F0", marginTop: "0.2rem" }}>Automated SLA Escalation Engine</div>
-            </div>
-
-            <div style={{ background: "rgba(255,255,255,0.12)", backdropFilter: "blur(12px)", padding: "1.25rem", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.18)" }}>
-              <div style={{ fontSize: "1.6rem", fontWeight: "800", color: "#A7F3D0" }}>10</div>
-              <div style={{ fontSize: "0.82rem", color: "#E2E8F0", marginTop: "0.2rem" }}>Integrated Municipal Departments</div>
-            </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "0.85rem" }}>
+            {[
+              { value: "100%", label: "Local ML Privacy" },
+              { value: "< 30s", label: "Auto SLA Routing" },
+              { value: "10+", label: "Departments Covered" },
+            ].map((s, i) => (
+              <div key={i} style={{ background: "rgba(255,255,255,0.08)", backdropFilter: "blur(12px)", padding: "1.1rem", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.12)" }}>
+                <div style={{ fontSize: "1.5rem", fontWeight: 800, color: "#86EFAC", letterSpacing: "-0.03em" }}>{s.value}</div>
+                <div style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.65)", marginTop: "0.2rem", fontWeight: 500 }}>{s.label}</div>
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* Footer Emblem */}
-        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.82rem", color: "rgba(255,255,255,0.7)" }}>
-          <MapPin size={15} color="#A7F3D0" />
+        {/* Footer */}
+        <div style={{ position: "relative", display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.8rem", color: "rgba(255,255,255,0.5)" }}>
+          <MapPin size={14} color="#86EFAC" />
           <span>Government Technology Platform • Secured by Spring Security & JWT</span>
         </div>
       </div>
 
-      {/* Right Side: Clean Login Gateway */}
-      <div 
-        style={{ 
-          flex: 0.9, 
-          display: "flex", 
-          flexDirection: "column", 
-          justifyContent: "center", 
-          padding: "3rem 4rem",
-          maxWidth: "540px",
-          margin: "0 auto"
-        }}
-      >
-        <div className="card" style={{ padding: "2.5rem 2.25rem", border: "1px solid var(--border-color)", boxShadow: "var(--shadow-lg)" }}>
-          <div style={{ marginBottom: "1.75rem", textAlign: "center" }}>
-            <h2 style={{ fontSize: "1.75rem", color: "var(--deep-navy)", fontWeight: "800", letterSpacing: "-0.02em" }}>
-              Sign In to JanSeva
+      {/* ── RIGHT PANEL ── */}
+      <div style={{
+        flex: 0.9,
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        alignItems: "center",
+        padding: "2.5rem 2rem",
+        minWidth: 340,
+      }}>
+        <div style={{ width: "100%", maxWidth: 440 }}>
+          {/* Header */}
+          <div style={{ marginBottom: "2rem" }}>
+            <h2 style={{ fontSize: "1.75rem", fontWeight: 800, color: "var(--text-primary)", fontFamily: "var(--font-heading)", letterSpacing: "-0.025em" }}>
+              Welcome back
             </h2>
-            <p style={{ color: "var(--text-secondary)", fontSize: "0.92rem", marginTop: "0.35rem" }}>
-              Enter your credentials to access your civic portal
+            <p style={{ color: "var(--text-secondary)", fontSize: "0.92rem", marginTop: "0.3rem" }}>
+              Sign in to access your civic portal
             </p>
           </div>
 
+          {/* Error */}
           {error && (
-            <div style={{ backgroundColor: "#FEF2F2", border: "1px solid #FECACA", color: "#B91C1C", padding: "0.85rem 1rem", borderRadius: "8px", fontSize: "0.85rem", marginBottom: "1.25rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <div className="alert alert-error" style={{ marginBottom: "1.25rem" }}>
               <span>{error}</span>
             </div>
           )}
 
+          {/* Form */}
           <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1.1rem" }}>
             <div>
-              <label style={{ fontSize: "0.75rem", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--text-secondary)", display: "flex", alignItems: "center", gap: "0.35rem" }}>
-                <Mail size={13} color="var(--primary-emerald)" />
-                <span>Official Email Address</span>
+              <label className="form-label">
+                <Mail size={13} color="var(--green-primary)" />
+                Email Address
               </label>
               <input
                 type="email"
-                className="chat-text-input"
-                style={{ width: "100%", marginTop: "0.35rem", padding: "0.75rem 1rem" }}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="citizen@sih.gov.in"
@@ -161,14 +173,12 @@ export default function Login() {
             </div>
 
             <div>
-              <label style={{ fontSize: "0.75rem", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--text-secondary)", display: "flex", alignItems: "center", gap: "0.35rem" }}>
-                <Lock size={13} color="var(--primary-emerald)" />
-                <span>Password</span>
+              <label className="form-label">
+                <Lock size={13} color="var(--green-primary)" />
+                Password
               </label>
               <input
                 type="password"
-                className="chat-text-input"
-                style={{ width: "100%", marginTop: "0.35rem", padding: "0.75rem 1rem" }}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••••••"
@@ -176,68 +186,80 @@ export default function Login() {
               />
             </div>
 
-            <button 
-              type="submit" 
-              className="btn btn-primary" 
-              style={{ marginTop: "0.5rem", padding: "0.85rem" }} 
+            <button
+              type="submit"
+              className="btn btn-primary btn-lg"
+              style={{ marginTop: "0.5rem", width: "100%" }}
               disabled={loading}
             >
-              <LogIn size={18} />
-              <span>{loading ? "Authenticating..." : "Sign In to Portal"}</span>
+              {loading ? (
+                <>
+                  <div className="spinner" style={{ width: 18, height: 18 }} />
+                  Authenticating...
+                </>
+              ) : (
+                <>
+                  <LogIn size={18} />
+                  Sign In to Portal
+                </>
+              )}
             </button>
           </form>
 
-          {/* Quick Demo Selector */}
-          <div style={{ marginTop: "1.75rem", paddingTop: "1.5rem", borderTop: "1px solid var(--border-color)" }}>
-            <div style={{ fontSize: "0.72rem", fontWeight: "700", color: "var(--text-secondary)", textAlign: "center", marginBottom: "0.85rem", letterSpacing: "0.06em", textTransform: "uppercase" }}>
-              One-Click Demo Roles
-            </div>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.55rem" }}>
-              <button
-                type="button"
-                className="btn btn-secondary"
-                style={{ justifyContent: "space-between", padding: "0.65rem 0.95rem", fontSize: "0.85rem" }}
-                onClick={() => handleQuickLogin("citizen@sih.gov.in")}
-              >
-                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                  <UserCheck size={16} color="var(--primary-emerald)" />
-                  <span style={{ fontWeight: "600" }}>Citizen Portal Demo</span>
-                </div>
-                <span className="badge badge-low" style={{ fontSize: "0.68rem" }}>CITIZEN</span>
-              </button>
-
-              <button
-                type="button"
-                className="btn btn-secondary"
-                style={{ justifyContent: "space-between", padding: "0.65rem 0.95rem", fontSize: "0.85rem" }}
-                onClick={() => handleQuickLogin("officer@sih.gov.in")}
-              >
-                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                  <Shield size={16} color="#D97706" />
-                  <span style={{ fontWeight: "600" }}>Water Department Officer</span>
-                </div>
-                <span className="badge badge-medium" style={{ fontSize: "0.68rem" }}>OFFICER</span>
-              </button>
-
-              <button
-                type="button"
-                className="btn btn-secondary"
-                style={{ justifyContent: "space-between", padding: "0.65rem 0.95rem", fontSize: "0.85rem" }}
-                onClick={() => handleQuickLogin("admin@sih.gov.in")}
-              >
-                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                  <Sparkles size={16} color="#7C3AED" />
-                  <span style={{ fontWeight: "600" }}>Executive City Admin</span>
-                </div>
-                <span className="badge badge-submitted" style={{ fontSize: "0.68rem" }}>SUPER_ADMIN</span>
-              </button>
-            </div>
+          {/* Divider */}
+          <div style={{ display: "flex", alignItems: "center", gap: "1rem", margin: "1.75rem 0" }}>
+            <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
+            <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+              Demo Access
+            </span>
+            <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
           </div>
-        </div>
 
-        <div style={{ textAlign: "center", marginTop: "1.5rem", fontSize: "0.88rem", color: "var(--text-secondary)" }}>
-          New to JanSeva? <Link to="/register" style={{ fontWeight: "700", color: "var(--primary-emerald)" }}>Create Citizen Account</Link>
+          {/* Quick demo logins */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.55rem" }}>
+            {[
+              { email: "citizen@sih.gov.in", label: "Citizen Portal", roleLabel: "CITIZEN", icon: UserCheck, iconColor: "var(--green-primary)" },
+              { email: "officer@sih.gov.in", label: "Department Officer", roleLabel: "OFFICER", icon: Zap, iconColor: "#D97706" },
+              { email: "admin@sih.gov.in", label: "Executive City Admin", roleLabel: "SUPER_ADMIN", icon: Sparkles, iconColor: "#7C3AED" },
+            ].map(({ email: dEmail, label, roleLabel, icon: Icon, iconColor }) => (
+              <button
+                key={dEmail}
+                type="button"
+                onClick={() => handleQuickLogin(dEmail)}
+                disabled={loading}
+                style={{
+                  display: "flex", alignItems: "center", justifyContent: "space-between",
+                  padding: "0.7rem 1rem", background: "var(--white)",
+                  border: "1px solid var(--border)", borderRadius: "var(--radius-md)",
+                  cursor: "pointer", transition: "all 0.15s", width: "100%",
+                  opacity: loading ? 0.6 : 1
+                }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--green-border)"; e.currentTarget.style.background = "var(--green-pale)"; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.background = "var(--white)"; }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+                  <Icon size={16} color={iconColor} />
+                  <span style={{ fontSize: "0.875rem", fontWeight: 600, color: "var(--text-primary)" }}>{label}</span>
+                </div>
+                <span style={{
+                  fontSize: "0.65rem", fontWeight: 700, padding: "0.2rem 0.5rem",
+                  borderRadius: "var(--radius-full)", background: "var(--bg-soft)",
+                  color: "var(--text-secondary)", letterSpacing: "0.04em",
+                  border: "1px solid var(--border)"
+                }}>
+                  {roleLabel}
+                </span>
+              </button>
+            ))}
+          </div>
+
+          {/* Register link */}
+          <p style={{ textAlign: "center", marginTop: "1.75rem", fontSize: "0.88rem", color: "var(--text-secondary)" }}>
+            New to JanSeva?{" "}
+            <Link to="/register" style={{ fontWeight: 700, color: "var(--green-primary)" }}>
+              Create Citizen Account
+            </Link>
+          </p>
         </div>
       </div>
     </div>

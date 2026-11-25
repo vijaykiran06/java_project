@@ -73,8 +73,9 @@ public class GrievanceController {
     @GetMapping("/workers/available")
     @PreAuthorize("hasAnyRole('OFFICER', 'DEPARTMENT_ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<List<WorkerWorkloadView>> getAvailableWorkers(
-            @RequestParam(value = "departmentId", required = false) Long departmentId) {
-        return ResponseEntity.ok(grievanceService.getAvailableWorkers(departmentId));
+            @RequestParam(value = "departmentId", required = false) Long departmentId,
+            @RequestParam(value = "department", required = false) String department) {
+        return ResponseEntity.ok(grievanceService.getAvailableWorkers(departmentId, department));
     }
 
     @PostMapping("/{id}/assign")

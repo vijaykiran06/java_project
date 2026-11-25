@@ -1,6 +1,6 @@
 import React, { useState, useContext, useRef, useEffect } from "react";
 import { AuthContext } from "../context/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import GrievancePreviewCard from "./GrievancePreviewCard";
 import FormattedMessage from "./FormattedMessage";
 import { 
@@ -19,7 +19,16 @@ import {
   ArrowRight,
   ShieldAlert,
   Globe,
-  Radio
+  Radio,
+  PlusCircle,
+  Eye,
+  LayoutDashboard,
+  Clock,
+  ShieldCheck,
+  CheckCircle2,
+  HelpCircle,
+  ArrowLeft,
+  Navigation
 } from "lucide-react";
 
 export default function AIGrievanceAssistant() {
@@ -46,17 +55,18 @@ export default function AIGrievanceAssistant() {
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, showPreview, createdGrievance]);
+  }, [messages, showPreview, createdGrievance, loading]);
 
   const [speechLang, setSpeechLang] = useState("en-IN");
 
   // Common quick prompt chips for citizen ease
   const quickPrompts = [
-    { label: "💧 Water Shortage", text: "There is no drinking water supply in our colony since yesterday morning" },
+    { label: "💧 Water Supply Cut", text: "There is no drinking water supply in our colony since yesterday morning" },
     { label: "💡 Broken Streetlight", text: "The streetlight near the main park entrance is broken and completely dark" },
-    { label: "🗑️ Garbage Dump", text: "Garbage has not been collected for three days and is overflowing on the corner" },
-    { label: "🚗 Blocked Parking", text: "Vehicles are parked illegally near the hospital entrance and blocking emergency traffic" },
-    { label: "⚡ Voltage Fluctuations", text: "Severe low voltage and frequent power cuts in Sector 4 are damaging home appliances" }
+    { label: "🗑️ Overflowing Garbage", text: "Garbage has not been collected for three days and is overflowing on the corner" },
+    { label: "🚗 Traffic & Blocked Parking", text: "Vehicles are parked illegally near the hospital entrance and blocking emergency traffic" },
+    { label: "⚡ Power Outage", text: "Severe low voltage and frequent power cuts in Sector 4 are damaging home appliances" },
+    { label: "🕳️ Dangerous Road Potholes", text: "Deep potholes on the main road after recent rains causing vehicle damage and accidents" }
   ];
 
   // Voice Recognition Handler (Web Speech API)
@@ -93,7 +103,7 @@ export default function AIGrievanceAssistant() {
           const lng = position.coords.longitude;
           setGeoCoords({ lat, lng });
 
-          const locText = `GPS Location (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+          const locText = `GPS Coordinates (${lat.toFixed(4)}° N, ${lng.toFixed(4)}° E)`;
 
           if (extractedData) {
             const updated = { ...extractedData, location_text: locText, latitude: lat, longitude: lng, missing_information: [] };
@@ -102,12 +112,12 @@ export default function AIGrievanceAssistant() {
 
             setMessages((prev) => [
               ...prev,
-              { sender: "user", text: "📍 Used my current GPS location" },
-              { sender: "ai", text: `Understood! Landmark set to ${locText}. Please inspect the confirmation summary below:` },
+              { sender: "user", text: "📍 Confirmed current GPS location coordinates" },
+              { sender: "ai", text: `Location locked to **${locText}**. Please verify the complete grievance summary below and submit officially:` },
             ]);
           }
         },
-        () => alert("Location access was denied. Please type your locality or landmark manually.")
+        () => alert("Location access was denied. Please enter your locality or landmark manually in the chat.")
       );
     }
   };
@@ -150,7 +160,7 @@ export default function AIGrievanceAssistant() {
             ...prev,
             {
               sender: "ai",
-              text: data.ai_message || `I have classified this as a **${result.category}** issue. Where is this problem located? (Please enter your locality, landmark, or street name)`,
+              text: data.ai_message || `I have classified this under **${result.category}** for the **${result.department}**. Where is this problem occurring? (Please enter your locality, landmark, or click GPS coordinates below)`,
               showLocButton: true,
             },
           ]);
@@ -160,7 +170,7 @@ export default function AIGrievanceAssistant() {
             ...prev,
             {
               sender: "ai",
-              text: data.ai_message || `Thank you. I have extracted your **${result.category}** complaint for the **${result.department}**. Please review and confirm the grievance summary below:`,
+              text: data.ai_message || `Thank you! I have parsed your **${result.category}** grievance and mapped it to the **${result.department}**. Please review and confirm your grievance filing below:`,
             },
           ]);
           setShowPreview(true);
@@ -214,11 +224,24 @@ export default function AIGrievanceAssistant() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to submit grievance");
 
-      setCreatedGrievance(data.grievance);
+      const grv = data.grievance || {};
+      const tNum = grv.tracking_number || grv.trackingNumber || data.tracking_number || ("GRV-" + Date.now());
+      setCreatedGrievance({
+        ...grv,
+        id: grv.id || data.id,
+        tracking_number: tNum,
+        trackingNumber: tNum,
+        category: grv.category || finalData.category || "General Issue",
+        department: grv.department || finalData.department || "Municipal Administration",
+        priority: grv.priority || finalData.priority || "MEDIUM",
+        status: grv.status || "SUBMITTED",
+        description: grv.description || finalData.description,
+        location_text: grv.location_text || grv.locationText || finalData.location_text || "Registered Location",
+      });
       setShowPreview(false);
     } catch (err) {
-      console.error(err);
-      alert(err.message);
+      console.error("Grievance submission error:", err);
+      alert(err.message || "Failed to register grievance. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -242,29 +265,40 @@ export default function AIGrievanceAssistant() {
 
   return (
     <div className="assistant-wrapper">
-      {/* Header Description */}
-      <div style={{ marginBottom: "1.5rem", display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: "1rem" }}>
-        <div>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", padding: "0.25rem 0.65rem", backgroundColor: "var(--status-success-bg)", border: "1px solid var(--status-success-border)", borderRadius: "9999px", fontSize: "0.74rem", fontWeight: "700", color: "var(--primary-dark)", marginBottom: "0.5rem" }}>
-            <Cpu size={12} />
-            <span>FastAPI Scikit-Learn Microservice Ready</span>
+      {/* Top Breadcrumb & Heading Bar */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.25rem", flexWrap: "wrap", gap: "0.75rem" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+          <Link 
+            to="/" 
+            className="btn btn-secondary btn-sm"
+            style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem", padding: "0.45rem 0.8rem", color: "var(--text-secondary)" }}
+          >
+            <ArrowLeft size={15} />
+            <span>Dashboard</span>
+          </Link>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <span style={{ color: "var(--border-mid)" }}>/</span>
+            <span style={{ fontSize: "0.85rem", fontWeight: "700", color: "var(--green-primary)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+              Lodge New Grievance
+            </span>
           </div>
-          <h2 style={{ fontSize: "1.85rem", color: "var(--deep-navy)", fontWeight: "800", letterSpacing: "-0.02em" }}>
-            AI Grievance Assistant
-          </h2>
-          <p style={{ color: "var(--text-secondary)", fontSize: "0.95rem", maxWidth: "600px", marginTop: "0.2rem" }}>
-            Lodge complaints conversationally in plain English or Hindi. Local AI automatically extracts categories, assesses urgency, and routes directly to the right municipal office.
-          </p>
         </div>
 
-        <button 
-          onClick={handleResetChat} 
-          className="btn btn-outline btn-sm"
-          title="Start fresh grievance conversation"
-        >
-          <RefreshCw size={14} />
-          <span>New Session</span>
-        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+          <div className="system-pill" title="Microservice active">
+            <span className="pulse-dot"></span>
+            <span>AI NLP Pipeline Active</span>
+          </div>
+
+          <button 
+            onClick={handleResetChat} 
+            className="btn btn-outline btn-sm"
+            title="Start fresh grievance conversation"
+          >
+            <RefreshCw size={13} />
+            <span>New Session</span>
+          </button>
+        </div>
       </div>
 
       {createdGrievance ? (
@@ -272,240 +306,330 @@ export default function AIGrievanceAssistant() {
         <div 
           className="card" 
           style={{ 
-            border: "2px solid var(--status-success-border)", 
-            backgroundColor: "#FFFFFF", 
-            padding: "2.5rem",
-            boxShadow: "0 10px 30px rgba(5, 150, 105, 0.12)",
+            border: "2px solid var(--green-border)", 
+            backgroundColor: "var(--white)", 
+            padding: "2.75rem",
+            boxShadow: "var(--shadow-xl)",
+            borderRadius: "var(--radius-xl)",
             animation: "messageIn 300ms cubic-bezier(0.16, 1, 0.3, 1) forwards"
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: "1rem", marginBottom: "1.25rem" }}>
-            <div style={{ width: "48px", height: "48px", borderRadius: "50%", backgroundColor: "var(--status-success-bg)", color: "var(--primary-emerald)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <CheckCircle size={28} />
+          <div style={{ display: "flex", alignItems: "center", gap: "1.25rem", marginBottom: "1.5rem" }}>
+            <div style={{ width: "56px", height: "56px", borderRadius: "50%", backgroundColor: "var(--green-pale)", color: "var(--green-primary)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: "2px solid var(--green-border)" }}>
+              <CheckCircle2 size={32} />
             </div>
             <div>
-              <h3 style={{ fontSize: "1.4rem", color: "var(--deep-navy)", fontWeight: "800" }}>
-                Grievance Officially Registered
-              </h3>
-              <p style={{ fontSize: "0.88rem", color: "var(--text-secondary)" }}>
-                Your complaint has been acknowledged by the municipal routing engine and assigned to field officers.
+              <div style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem", padding: "0.2rem 0.6rem", borderRadius: "9999px", background: "var(--green-pale)", color: "var(--green-forest)", fontSize: "0.72rem", fontWeight: "800", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "0.35rem" }}>
+                Official Registration Confirmed
+              </div>
+              <h2 style={{ fontSize: "1.75rem", color: "var(--text-primary)", fontWeight: "800", fontFamily: "var(--font-heading)", letterSpacing: "-0.02em" }}>
+                Grievance Filed Successfully
+              </h2>
+              <p style={{ fontSize: "0.92rem", color: "var(--text-secondary)", marginTop: "0.15rem" }}>
+                Your complaint has been parsed, logged into the municipal registry, and routed under the 24-Hour SLA guarantee.
               </p>
             </div>
           </div>
 
-          <div style={{ backgroundColor: "var(--bg-main)", borderRadius: "12px", border: "1px solid var(--border-color)", padding: "1.5rem", margin: "1.5rem 0" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingBottom: "1rem", borderBottom: "1px solid var(--border-color)", flexWrap: "wrap", gap: "0.5rem" }}>
+          <div style={{ backgroundColor: "var(--bg-soft)", borderRadius: "var(--radius-lg)", border: "1px solid var(--border)", padding: "1.75rem", margin: "1.75rem 0" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingBottom: "1.25rem", borderBottom: "1px solid var(--border)", flexWrap: "wrap", gap: "1rem" }}>
               <div>
-                <span style={{ fontSize: "0.74rem", textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--text-secondary)", fontWeight: "700" }}>
-                  Official Tracking ID
+                <span style={{ fontSize: "0.72rem", textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--text-secondary)", fontWeight: "700" }}>
+                  Official Municipal Tracking ID
                 </span>
-                <div style={{ fontFamily: "var(--font-heading)", fontSize: "1.5rem", fontWeight: "800", color: "var(--deep-navy)" }}>
-                  {createdGrievance.tracking_number}
+                <div style={{ fontFamily: "'Courier New', monospace", fontSize: "1.65rem", fontWeight: "800", color: "var(--green-forest)", marginTop: "0.2rem", letterSpacing: "0.03em" }}>
+                  {createdGrievance.tracking_number || createdGrievance.trackingNumber || "N/A"}
                 </div>
               </div>
 
               <button 
-                onClick={() => handleCopyTicket(createdGrievance.tracking_number)}
-                className="btn btn-secondary btn-sm"
+                onClick={() => handleCopyTicket(createdGrievance.tracking_number || createdGrievance.trackingNumber)}
+                className="btn btn-secondary"
+                style={{ padding: "0.6rem 1rem", fontSize: "0.85rem" }}
               >
-                {copied ? <Check size={14} color="var(--primary-emerald)" /> : <Copy size={14} />}
-                <span>{copied ? "Copied ID!" : "Copy Tracking ID"}</span>
+                {copied ? <Check size={15} color="var(--green-primary)" /> : <Copy size={15} />}
+                <span>{copied ? "Copied to Clipboard!" : "Copy Tracking ID"}</span>
               </button>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: "1rem", marginTop: "1rem" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "1.25rem", marginTop: "1.25rem" }}>
               <div>
-                <div style={{ fontSize: "0.72rem", textTransform: "uppercase", color: "var(--text-secondary)", fontWeight: "700" }}>Category</div>
-                <div style={{ fontWeight: "700", color: "var(--deep-navy)", marginTop: "0.15rem" }}>{createdGrievance.category}</div>
+                <div style={{ fontSize: "0.72rem", textTransform: "uppercase", color: "var(--text-secondary)", fontWeight: "700", letterSpacing: "0.04em" }}>Civic Category</div>
+                <div style={{ fontWeight: "700", color: "var(--text-primary)", marginTop: "0.25rem", fontSize: "0.95rem" }}>{createdGrievance.category}</div>
               </div>
 
               <div>
-                <div style={{ fontSize: "0.72rem", textTransform: "uppercase", color: "var(--text-secondary)", fontWeight: "700" }}>Assigned Department</div>
-                <div style={{ fontWeight: "700", color: "var(--primary-emerald)", marginTop: "0.15rem" }}>{createdGrievance.department}</div>
+                <div style={{ fontSize: "0.72rem", textTransform: "uppercase", color: "var(--text-secondary)", fontWeight: "700", letterSpacing: "0.04em" }}>Assigned Department</div>
+                <div style={{ fontWeight: "700", color: "var(--green-primary)", marginTop: "0.25rem", fontSize: "0.95rem" }}>{createdGrievance.department}</div>
               </div>
 
               <div>
-                <div style={{ fontSize: "0.72rem", textTransform: "uppercase", color: "var(--text-secondary)", fontWeight: "700" }}>Assessed Priority</div>
-                <div style={{ marginTop: "0.15rem" }}>
+                <div style={{ fontSize: "0.72rem", textTransform: "uppercase", color: "var(--text-secondary)", fontWeight: "700", letterSpacing: "0.04em" }}>Priority Level</div>
+                <div style={{ marginTop: "0.25rem" }}>
                   <span className={`badge badge-${(createdGrievance.priority || 'medium').toLowerCase()}`}>
-                    {createdGrievance.priority}
+                    {createdGrievance.priority || "MEDIUM"}
                   </span>
                 </div>
               </div>
 
               <div>
-                <div style={{ fontSize: "0.72rem", textTransform: "uppercase", color: "var(--text-secondary)", fontWeight: "700" }}>Current Status</div>
-                <div style={{ marginTop: "0.15rem" }}>
-                  <span className="badge badge-submitted">
-                    <span className="badge-dot"></span>
-                    <span>{createdGrievance.status}</span>
-                  </span>
+                <div style={{ fontSize: "0.72rem", textTransform: "uppercase", color: "var(--text-secondary)", fontWeight: "700", letterSpacing: "0.04em" }}>Resolution SLA</div>
+                <div style={{ marginTop: "0.25rem", display: "inline-flex", alignItems: "center", gap: "0.35rem", fontSize: "0.85rem", fontWeight: "700", color: "var(--green-forest)", background: "var(--green-pale)", padding: "0.2rem 0.6rem", borderRadius: "6px" }}>
+                  <Clock size={13} />
+                  <span>24 Hours Target</span>
                 </div>
               </div>
             </div>
           </div>
 
-          <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
-            <button className="btn btn-primary btn-lg" onClick={() => navigate("/")}>
-              <span>View My Grievances Dashboard</span>
-              <ArrowRight size={17} />
+          <div style={{ display: "flex", gap: "0.85rem", flexWrap: "wrap" }}>
+            <button 
+              className="btn btn-primary btn-lg" 
+              onClick={() => navigate("/", { 
+                state: { 
+                  openGrievanceId: createdGrievance.id, 
+                  trackingNumber: createdGrievance.tracking_number || createdGrievance.trackingNumber 
+                } 
+              })}
+            >
+              <Eye size={17} />
+              <span>View Registered Grievance</span>
             </button>
-            <button className="btn btn-secondary btn-lg" onClick={handleResetChat}>
+            <button className="btn btn-secondary btn-lg" onClick={() => navigate("/")}>
+              <LayoutDashboard size={17} />
+              <span>Return to Dashboard</span>
+            </button>
+            <button className="btn btn-outline btn-lg" onClick={handleResetChat}>
               <PlusCircle size={17} />
               <span>Lodge Another Complaint</span>
             </button>
           </div>
         </div>
       ) : (
-        /* Active Chat Container */
-        <div className="assistant-box">
-          {/* Assistant Header */}
-          <div className="assistant-header">
-            <div className="assistant-branding">
-              <div className="assistant-avatar">
-                <Bot size={22} />
-              </div>
-              <div>
-                <div className="assistant-name">Civic AI Lodging Bot</div>
-                <div className="assistant-status">
-                  <span className="pulse-dot"></span>
-                  <span>100% Offline Scikit-Learn NLP Pipeline</span>
+        /* Split Layout: Chat on Left, Assistant Guide on Right */
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: "1.5rem", alignItems: "start" }} className="assistant-layout-grid">
+          {/* Active Chat Container */}
+          <div className="assistant-box">
+            {/* Assistant Header */}
+            <div className="assistant-header">
+              <div className="assistant-branding">
+                <div className="assistant-avatar">
+                  <Bot size={22} />
                 </div>
-              </div>
-            </div>
-
-            <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "0.3rem", fontSize: "0.78rem", color: "#E2E8F0", background: "rgba(255,255,255,0.1)", padding: "0.35rem 0.65rem", borderRadius: "6px" }}>
-                <Globe size={13} />
-                <span>Voice: {speechLang === "en-IN" ? "English" : speechLang === "hi-IN" ? "Hindi" : speechLang}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Messages Pane */}
-          <div className="assistant-chat-pane">
-            {messages.map((msg, idx) => (
-              <div key={idx} className={`chat-bubble-row ${msg.sender}`}>
-                <div className={`bubble-avatar ${msg.sender}`}>
-                  {msg.sender === "ai" ? "AI" : (user?.name ? user.name.charAt(0).toUpperCase() : "U")}
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div className="bubble-content">
-                    <FormattedMessage text={msg.text} />
+                <div>
+                  <div className="assistant-name">Civic AI Lodging Bot</div>
+                  <div className="assistant-status">
+                    <span className="pulse-dot"></span>
+                    <span>100% On-Device Scikit-Learn NLP Pipeline</span>
                   </div>
-
-                  {msg.showLocButton && (
-                    <button 
-                      className="btn btn-primary btn-sm"
-                      style={{ marginTop: "0.65rem" }}
-                      onClick={handleUseMyLocation}
-                    >
-                      <MapPin size={14} />
-                      <span>Use My Current GPS Coordinates</span>
-                    </button>
-                  )}
                 </div>
               </div>
-            ))}
 
-            {/* Quick Prompts Tray for initial turn */}
-            {messages.length === 1 && (
-              <div className="quick-prompts-tray">
-                <div className="quick-prompt-title">
-                  💡 Common Municipal Issue Presets (Click to test AI routing):
+              <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", fontSize: "0.78rem", color: "#FFFFFF", background: "rgba(255,255,255,0.15)", padding: "0.35rem 0.75rem", borderRadius: "var(--radius-full)", fontWeight: "600", border: "1px solid rgba(255,255,255,0.2)" }}>
+                  <Globe size={13} />
+                  <span>{speechLang === "en-IN" ? "English (India)" : speechLang === "hi-IN" ? "Hindi (हिंदी)" : speechLang}</span>
                 </div>
-                <div className="chips-container">
-                  {quickPrompts.map((p, pIdx) => (
-                    <button
-                      key={pIdx}
-                      className="prompt-chip"
-                      onClick={() => handleChipClick(p.text)}
-                      disabled={loading}
-                    >
-                      <span>{p.label}</span>
-                    </button>
-                  ))}
+              </div>
+            </div>
+
+            {/* Messages Pane */}
+            <div className="assistant-chat-pane">
+              {messages.map((msg, idx) => (
+                <div key={idx} className={`chat-bubble-row ${msg.sender}`}>
+                  <div className={`bubble-avatar ${msg.sender}`}>
+                    {msg.sender === "ai" ? <Bot size={16} /> : (user?.name ? user.name.charAt(0).toUpperCase() : "U")}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div className="bubble-content">
+                      <FormattedMessage text={msg.text} />
+                    </div>
+
+                    {msg.showLocButton && (
+                      <div style={{ marginTop: "0.75rem" }}>
+                        <button 
+                          className="btn btn-primary btn-sm"
+                          onClick={handleUseMyLocation}
+                          style={{ boxShadow: "var(--shadow-sm)" }}
+                        >
+                          <Navigation size={14} />
+                          <span>Use My Current GPS Coordinates</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
+              ))}
+
+              {/* Quick Prompts Tray for initial turn */}
+              {messages.length === 1 && (
+                <div className="quick-prompts-tray">
+                  <div className="quick-prompt-title">
+                    <Sparkles size={14} />
+                    <span>Quick Issue Presets (Click to test instant AI categorization):</span>
+                  </div>
+                  <div className="chips-container">
+                    {quickPrompts.map((p, pIdx) => (
+                      <button
+                        key={pIdx}
+                        className="prompt-chip"
+                        onClick={() => handleChipClick(p.text)}
+                        disabled={loading}
+                      >
+                        <span>{p.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {loading && (
+                <div className="chat-bubble-row ai">
+                  <div className="bubble-avatar ai">
+                    <Bot size={16} />
+                  </div>
+                  <div className="bubble-content" style={{ display: "flex", alignItems: "center", gap: "0.65rem", color: "var(--green-forest)", background: "var(--green-pale)", border: "1px solid var(--green-border)" }}>
+                    <div className="spinner" style={{ width: 16, height: 16, borderWidth: 2 }} />
+                    <span style={{ fontSize: "0.88rem", fontWeight: "600" }}>
+                      Local ML engine is classifying grievance and determining department...
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {showPreview && extractedData && (
+                <GrievancePreviewCard
+                  data={extractedData}
+                  onEdit={(updated) => setExtractedData(updated)}
+                  onSubmit={handleSubmitGrievance}
+                />
+              )}
+
+              <div ref={chatEndRef} />
+            </div>
+
+            {/* Listening Indicator when active */}
+            {isListening && (
+              <div style={{ backgroundColor: "#FEF2F2", borderTop: "1px solid #FECACA", padding: "0.75rem 1.5rem", display: "flex", alignItems: "center", gap: "0.6rem", color: "#DC2626", fontSize: "0.85rem", fontWeight: "700" }}>
+                <Radio size={16} className="spin" />
+                <span>Listening to microphone... Speak your civic complaint clearly</span>
               </div>
             )}
 
-            {loading && (
-              <div className="chat-bubble-row ai">
-                <div className="bubble-avatar ai">AI</div>
-                <div className="bubble-content" style={{ display: "flex", alignItems: "center", gap: "0.6rem", color: "var(--text-secondary)" }}>
-                  <RefreshCw className="spin" size={16} color="var(--primary-emerald)" />
-                  <span>Local AI is parsing grievance context & extracting category...</span>
-                </div>
-              </div>
-            )}
+            {/* Chat Input Toolbar */}
+            <form onSubmit={handleSendMessage} className="chat-input-toolbar">
+              <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                <select 
+                  value={speechLang} 
+                  onChange={(e) => setSpeechLang(e.target.value)}
+                  className="filter-select"
+                  style={{ padding: "0.6rem 0.75rem", fontSize: "0.82rem", fontWeight: "600" }}
+                  title="Select Speech Recognition Language"
+                >
+                  <option value="en-IN">English (India)</option>
+                  <option value="hi-IN">Hindi (हिंदी)</option>
+                  <option value="te-IN">Telugu (తెలుగు)</option>
+                  <option value="ta-IN">Tamil (தமிழ்)</option>
+                  <option value="mr-IN">Marathi (मराठी)</option>
+                  <option value="bn-IN">Bengali (বাংলা)</option>
+                </select>
 
-            {showPreview && extractedData && (
-              <GrievancePreviewCard
-                data={extractedData}
-                onEdit={(updated) => setExtractedData(updated)}
-                onSubmit={handleSubmitGrievance}
+                <button
+                  type="button"
+                  className={`btn ${isListening ? "btn-danger" : "btn-secondary"}`}
+                  style={{ padding: "0.65rem 0.8rem", borderRadius: "var(--radius-md)" }}
+                  onClick={handleVoiceInput}
+                  title={isListening ? "Stop listening" : "Speak complaint via microphone"}
+                >
+                  {isListening ? <MicOff size={17} color="#DC2626" /> : <Mic size={17} color="var(--green-primary)" />}
+                </button>
+              </div>
+
+              <input
+                type="text"
+                className="chat-text-input"
+                placeholder={isListening ? "Listening... Speak your complaint clearly" : "Describe problem (e.g. 'Potholes on Ring Road', 'Water supply cut in Sector 5')..."}
+                value={inputText}
+                onChange={(e) => setInputText(e.target.value)}
+                disabled={loading || showPreview}
+                style={{ flex: 1, padding: "0.75rem 1rem", fontSize: "0.92rem" }}
               />
-            )}
 
-            <div ref={chatEndRef} />
+              <button 
+                type="submit" 
+                className="btn btn-primary" 
+                disabled={loading || !inputText.trim() || showPreview}
+                style={{ padding: "0.75rem 1.4rem" }}
+              >
+                <Send size={16} />
+                <span>Send</span>
+              </button>
+            </form>
           </div>
 
-          {/* Listening Indicator when active */}
-          {isListening && (
-            <div style={{ backgroundColor: "#FEF2F2", borderTop: "1px solid #FECACA", padding: "0.6rem 1.75rem", display: "flex", alignItems: "center", gap: "0.6rem", color: "#DC2626", fontSize: "0.85rem", fontWeight: "600" }}>
-              <Radio size={16} className="spin" />
-              <span>Listening to voice... Speak your complaint clearly into the microphone</span>
-            </div>
-          )}
-
-          {/* Chat Input Toolbar */}
-          <form onSubmit={handleSendMessage} className="chat-input-toolbar">
-            <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
-              <select 
-                value={speechLang} 
-                onChange={(e) => setSpeechLang(e.target.value)}
-                className="filter-select"
-                style={{ padding: "0.6rem 0.65rem", fontSize: "0.82rem" }}
-                title="Select Speech Recognition Language"
-              >
-                <option value="en-IN">English (India)</option>
-                <option value="hi-IN">Hindi (हिंदी)</option>
-                <option value="te-IN">Telugu (తెలుగు)</option>
-                <option value="ta-IN">Tamil (தமிழ்)</option>
-                <option value="mr-IN">Marathi (मराठी)</option>
-                <option value="bn-IN">Bengali (বাংলা)</option>
-              </select>
-
-              <button
-                type="button"
-                className={`btn ${isListening ? "btn-outline-danger" : "btn-secondary"}`}
-                style={{ padding: "0.65rem 0.75rem" }}
-                onClick={handleVoiceInput}
-                title={isListening ? "Stop listening" : "Speak complaint via microphone"}
-              >
-                {isListening ? <MicOff size={18} color="#DC2626" /> : <Mic size={18} color="var(--text-secondary)" />}
-              </button>
+          {/* Right Guidance Sidebar */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }} className="assistant-sidebar-panel">
+            {/* 24-Hour SLA Guarantee Card */}
+            <div className="card" style={{ padding: "1.5rem", border: "1px solid var(--green-border)", background: "var(--white)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", marginBottom: "0.75rem" }}>
+                <div style={{ width: 36, height: 36, borderRadius: "10px", background: "var(--green-pale)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--green-primary)" }}>
+                  <ShieldCheck size={20} />
+                </div>
+                <div>
+                  <h4 style={{ fontSize: "1rem", fontWeight: "800", color: "var(--text-primary)", fontFamily: "var(--font-heading)" }}>
+                    24h Resolution SLA
+                  </h4>
+                  <div style={{ fontSize: "0.72rem", color: "var(--green-forest)", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                    Guaranteed Accountability
+                  </div>
+                </div>
+              </div>
+              <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", lineHeight: 1.55 }}>
+                Every grievance submitted triggers an automatic 24-hour resolution timer. If department field officers do not act, the complaint is auto-escalated to senior municipal authorities.
+              </p>
             </div>
 
-            <input
-              type="text"
-              className="chat-text-input"
-              placeholder={isListening ? "Listening... Please speak your complaint" : "Describe problem (e.g. 'Potholes on Ring Road', 'Water supply cut in Sector 5')..."}
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              disabled={loading || showPreview}
-            />
+            {/* How AI Routing Works */}
+            <div className="card" style={{ padding: "1.5rem" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1rem" }}>
+                <Sparkles size={16} color="var(--green-primary)" />
+                <h4 style={{ fontSize: "0.95rem", fontWeight: "800", color: "var(--text-primary)", fontFamily: "var(--font-heading)" }}>
+                  How Local AI Operates
+                </h4>
+              </div>
 
-            <button 
-              type="submit" 
-              className="btn btn-primary" 
-              disabled={loading || !inputText.trim() || showPreview}
-              style={{ padding: "0.75rem 1.25rem" }}
-            >
-              <Send size={17} />
-              <span>Send</span>
-            </button>
-          </form>
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.85rem" }}>
+                {[
+                  { step: "1", title: "Describe Naturally", desc: "No complex forms. Speak or type in English or Hindi." },
+                  { step: "2", title: "Smart Extraction", desc: "ML extracts specific category, urgency, and landmark." },
+                  { step: "3", title: "Direct Routing", desc: "Assigned directly to the correct department worker." }
+                ].map((item, idx) => (
+                  <div key={idx} style={{ display: "flex", gap: "0.75rem", alignItems: "flex-start" }}>
+                    <div style={{ width: 22, height: 22, borderRadius: "50%", background: "var(--green-pale)", color: "var(--green-forest)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.75rem", fontWeight: "800", flexShrink: 0 }}>
+                      {item.step}
+                    </div>
+                    <div>
+                      <div style={{ fontSize: "0.82rem", fontWeight: "700", color: "var(--text-primary)" }}>{item.title}</div>
+                      <div style={{ fontSize: "0.78rem", color: "var(--text-secondary)", lineHeight: 1.4, marginTop: "0.1rem" }}>{item.desc}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Quick Tips */}
+            <div className="card" style={{ padding: "1.25rem", background: "var(--bg-soft)", border: "1px solid var(--border)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", fontSize: "0.82rem", fontWeight: "700", color: "var(--text-primary)", marginBottom: "0.5rem" }}>
+                <HelpCircle size={15} color="var(--green-primary)" />
+                <span>Tips for Fastest Resolution</span>
+              </div>
+              <ul style={{ fontSize: "0.78rem", color: "var(--text-secondary)", paddingLeft: "1.2rem", lineHeight: 1.6, margin: 0 }}>
+                <li>Include a nearby prominent landmark or street name.</li>
+                <li>Tap <strong>GPS Coordinates</strong> for pin-point field inspection.</li>
+                <li>Mention duration (e.g. "for 3 days") to help AI calibrate SLA priority.</li>
+              </ul>
+            </div>
+          </div>
         </div>
       )}
     </div>

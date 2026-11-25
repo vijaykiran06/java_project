@@ -46,8 +46,9 @@ public class AdminController {
 
     @GetMapping("/workers/available")
     public ResponseEntity<List<WorkerWorkloadView>> getAvailableWorkers(
-            @RequestParam(value = "departmentId", required = false) Long departmentId) {
-        return ResponseEntity.ok(grievanceService.getAvailableWorkers(departmentId));
+            @RequestParam(value = "departmentId", required = false) Long departmentId,
+            @RequestParam(value = "department", required = false) String department) {
+        return ResponseEntity.ok(grievanceService.getAvailableWorkers(departmentId, department));
     }
 
     @PostMapping("/grievances/{id}/assign")

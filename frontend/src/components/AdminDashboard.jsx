@@ -192,11 +192,12 @@ export default function AdminDashboard() {
     setLoadingWorkers(true);
 
     try {
-      let res = await fetch("/api/admin/workers/available", {
+      const deptParam = g.department ? `?department=${encodeURIComponent(g.department)}` : "";
+      let res = await fetch(`/api/admin/workers/available${deptParam}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) {
-        res = await fetch("/api/grievances/workers/available", {
+        res = await fetch(`/api/grievances/workers/available${deptParam}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
       }
@@ -1317,9 +1318,14 @@ export default function AdminDashboard() {
             <form onSubmit={handleAssignWorkerSubmit}>
               {/* Worker Selection with Workload Badges */}
               <div style={{ marginBottom: "1.25rem" }}>
-                <label style={{ display: "block", fontSize: "0.82rem", fontWeight: "700", color: "var(--deep-navy)", marginBottom: "0.5rem" }}>
-                  Select Responsible Worker / Inspector <span style={{ color: "#DC2626" }}>*</span>
-                </label>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
+                  <label style={{ fontSize: "0.82rem", fontWeight: "700", color: "var(--deep-navy)" }}>
+                    Select Field Officer for {assignModalGrievance.department} <span style={{ color: "#DC2626" }}>*</span>
+                  </label>
+                  <span style={{ fontSize: "0.72rem", color: "var(--primary-emerald)", fontWeight: "700", background: "var(--status-success-bg)", padding: "0.2rem 0.5rem", borderRadius: "4px" }}>
+                    Department-Filtered
+                  </span>
+                </div>
 
                 {loadingWorkers ? (
                   <div style={{ textAlign: "center", padding: "1.5rem", color: "var(--text-secondary)" }}>
@@ -1327,8 +1333,8 @@ export default function AdminDashboard() {
                     <div style={{ fontSize: "0.82rem" }}>Fetching available departmental workers...</div>
                   </div>
                 ) : availableWorkers.length === 0 ? (
-                  <div style={{ padding: "0.75rem", backgroundColor: "#FEF2F2", borderRadius: "6px", fontSize: "0.82rem", color: "#DC2626" }}>
-                    No field workers configured. Please seed officers in database.
+                  <div style={{ padding: "0.85rem", backgroundColor: "#FEF2F2", border: "1px solid #FECACA", borderRadius: "6px", fontSize: "0.82rem", color: "#DC2626" }}>
+                    No field officers currently registered for <strong>{assignModalGrievance.department}</strong>. Grievance remains safely unassigned until an official is configured.
                   </div>
                 ) : (
                   <div style={{ maxHeight: "200px", overflowY: "auto", border: "1px solid var(--border-color)", borderRadius: "8px", padding: "0.5rem", display: "flex", flexDirection: "column", gap: "0.4rem" }}>

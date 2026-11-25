@@ -1,20 +1,18 @@
 import React, { useState } from "react";
-import { CheckCircle2, Edit3, MapPin, Building2, AlertTriangle, FileText, Send, X, Check } from "lucide-react";
+import { CheckCircle2, Edit3, MapPin, Building2, AlertTriangle, FileText, Send, X, Check, ShieldCheck } from "lucide-react";
 
 export default function GrievancePreviewCard({ data, onSubmit, onEdit }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedData, setEditedData] = useState({ ...data });
 
-  const getPriorityBadge = (priority) => {
-    switch (priority) {
-      case "CRITICAL": return { text: "Critical", bg: "#FEF2F2", color: "#B91C1C", border: "#FECACA" };
-      case "HIGH": return { text: "High", bg: "#FFF1F2", color: "#E11D48", border: "#FECDD3" };
-      case "MEDIUM": return { text: "Medium", bg: "#FFFBEB", color: "#D97706", border: "#FDE68A" };
-      default: return { text: "Low", bg: "#F0FDF4", color: "#16A34A", border: "#BBF7D0" };
+  const getPriorityBadgeClass = (priority) => {
+    switch ((priority || "").toUpperCase()) {
+      case "CRITICAL": return "badge-critical";
+      case "HIGH": return "badge-high";
+      case "MEDIUM": return "badge-medium";
+      default: return "badge-low";
     }
   };
-
-  const pBadge = getPriorityBadge(editedData.priority || "MEDIUM");
 
   const handleSaveEdit = () => {
     setIsEditing(false);
@@ -23,75 +21,65 @@ export default function GrievancePreviewCard({ data, onSubmit, onEdit }) {
 
   return (
     <div 
+      className="card"
       style={{
-        backgroundColor: "#FFFFFF",
-        border: "1.5px solid var(--primary-emerald)",
-        borderRadius: "14px",
-        padding: "1.5rem",
-        marginTop: "1rem",
-        boxShadow: "0 4px 16px rgba(5, 150, 105, 0.12)",
+        backgroundColor: "var(--white)",
+        border: "2px solid var(--green-border)",
+        borderRadius: "var(--radius-xl)",
+        padding: "1.75rem",
+        marginTop: "1.25rem",
+        boxShadow: "var(--shadow-md)",
         animation: "messageIn 240ms cubic-bezier(0.16, 1, 0.3, 1) forwards"
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.85rem", flexWrap: "wrap", gap: "0.5rem" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-          <div style={{ width: "26px", height: "26px", borderRadius: "50%", backgroundColor: "var(--status-success-bg)", color: "var(--primary-emerald)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <CheckCircle2 size={16} />
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1rem", flexWrap: "wrap", gap: "0.5rem" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+          <div style={{ width: "30px", height: "30px", borderRadius: "50%", backgroundColor: "var(--green-pale)", color: "var(--green-primary)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <CheckCircle2 size={18} />
           </div>
-          <h3 style={{ fontSize: "1.05rem", color: "var(--deep-navy)", fontWeight: "700" }}>
+          <h3 style={{ fontSize: "1.1rem", color: "var(--text-primary)", fontWeight: "800", fontFamily: "var(--font-heading)" }}>
             AI-Extracted Grievance Summary
           </h3>
         </div>
         
-        <span 
-          style={{ 
-            padding: "0.25rem 0.65rem", 
-            borderRadius: "6px", 
-            fontSize: "0.75rem", 
-            fontWeight: "700", 
-            backgroundColor: pBadge.bg, 
-            color: pBadge.color, 
-            border: `1px solid ${pBadge.border}`,
-            textTransform: "uppercase",
-            letterSpacing: "0.04em"
-          }}
-        >
-          {editedData.priority} Priority
+        <span className={`badge ${getPriorityBadgeClass(editedData.priority)}`}>
+          {editedData.priority || "MEDIUM"} Priority
         </span>
       </div>
 
-      <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", marginBottom: "1.1rem", lineHeight: "1.45" }}>
+      <p style={{ fontSize: "0.875rem", color: "var(--text-secondary)", marginBottom: "1.25rem", lineHeight: "1.5" }}>
         Our local machine learning model classified your complaint into the verified municipal category below. Please review or adjust details before filing officially:
       </p>
 
       {isEditing ? (
-        <div style={{ display: "flex", flexDirection: "column", gap: "0.85rem", backgroundColor: "var(--bg-subtle)", padding: "1rem", borderRadius: "10px", border: "1px solid var(--border-color)" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "1rem", backgroundColor: "var(--bg-soft)", padding: "1.25rem", borderRadius: "var(--radius-lg)", border: "1px solid var(--border)" }}>
           <div>
-            <label style={{ fontSize: "0.74rem", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--text-secondary)" }}>
+            <label className="form-label">
+              <MapPin size={13} color="var(--green-primary)" />
               Location / Landmark
             </label>
             <input
               type="text"
               className="chat-text-input"
-              style={{ width: "100%", marginTop: "0.3rem", padding: "0.55rem 0.85rem" }}
               value={editedData.location_text || ""}
               onChange={(e) => setEditedData({ ...editedData, location_text: e.target.value })}
               placeholder="e.g. Near Community Center, Block B, Main Road"
             />
           </div>
           <div>
-            <label style={{ fontSize: "0.74rem", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--text-secondary)" }}>
+            <label className="form-label">
+              <FileText size={13} color="var(--green-primary)" />
               Complaint Description
             </label>
             <textarea
               className="chat-text-input"
-              style={{ width: "100%", height: "85px", marginTop: "0.3rem", padding: "0.55rem 0.85rem", fontFamily: "inherit", resize: "vertical" }}
+              style={{ width: "100%", height: "90px", resize: "vertical" }}
               value={editedData.description || ""}
               onChange={(e) => setEditedData({ ...editedData, description: e.target.value })}
             />
           </div>
-          <div style={{ display: "flex", gap: "0.6rem", justifyContent: "flex-end", marginTop: "0.25rem" }}>
-            <button className="btn btn-outline btn-sm" onClick={() => setIsEditing(false)}>
+          <div style={{ display: "flex", gap: "0.6rem", justifyContent: "flex-end" }}>
+            <button className="btn btn-secondary btn-sm" onClick={() => setIsEditing(false)}>
               <X size={14} /> Cancel
             </button>
             <button className="btn btn-primary btn-sm" onClick={handleSaveEdit}>
@@ -104,20 +92,20 @@ export default function GrievancePreviewCard({ data, onSubmit, onEdit }) {
           <div 
             style={{ 
               display: "grid", 
-              gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", 
-              gap: "0.85rem", 
-              marginBottom: "1rem", 
-              backgroundColor: "var(--bg-main)", 
-              padding: "1rem", 
-              borderRadius: "10px", 
-              border: "1px solid var(--border-color)" 
+              gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", 
+              gap: "1rem", 
+              marginBottom: "1.25rem", 
+              backgroundColor: "var(--bg-soft)", 
+              padding: "1.25rem", 
+              borderRadius: "var(--radius-lg)", 
+              border: "1px solid var(--border)" 
             }}
           >
             <div>
               <div style={{ fontSize: "0.72rem", textTransform: "uppercase", fontWeight: "700", color: "var(--text-secondary)", letterSpacing: "0.05em" }}>
                 Civic Category
               </div>
-              <div style={{ fontSize: "0.92rem", fontWeight: "700", color: "var(--deep-navy)", marginTop: "0.2rem" }}>
+              <div style={{ fontSize: "0.95rem", fontWeight: "800", color: "var(--text-primary)", marginTop: "0.25rem" }}>
                 {editedData.category}
               </div>
             </div>
@@ -126,41 +114,41 @@ export default function GrievancePreviewCard({ data, onSubmit, onEdit }) {
               <div style={{ fontSize: "0.72rem", textTransform: "uppercase", fontWeight: "700", color: "var(--text-secondary)", letterSpacing: "0.05em" }}>
                 Specific Issue
               </div>
-              <div style={{ fontSize: "0.92rem", fontWeight: "600", color: "var(--text-primary)", marginTop: "0.2rem" }}>
+              <div style={{ fontSize: "0.92rem", fontWeight: "600", color: "var(--text-primary)", marginTop: "0.25rem" }}>
                 {editedData.subcategory || "General Complaint"}
               </div>
             </div>
 
             <div>
-              <div style={{ fontSize: "0.72rem", textTransform: "uppercase", fontWeight: "700", color: "var(--text-secondary)", letterSpacing: "0.05em", display: "flex", alignItems: "center", gap: "0.25rem" }}>
-                <Building2 size={12} color="var(--primary-emerald)" /> Designated Department
+              <div style={{ fontSize: "0.72rem", textTransform: "uppercase", fontWeight: "700", color: "var(--text-secondary)", letterSpacing: "0.05em", display: "flex", alignItems: "center", gap: "0.3rem" }}>
+                <Building2 size={12} color="var(--green-primary)" /> Designated Department
               </div>
-              <div style={{ fontSize: "0.92rem", fontWeight: "700", color: "var(--primary-emerald)", marginTop: "0.2rem" }}>
+              <div style={{ fontSize: "0.95rem", fontWeight: "700", color: "var(--green-forest)", marginTop: "0.25rem" }}>
                 {editedData.department}
               </div>
             </div>
 
             <div>
-              <div style={{ fontSize: "0.72rem", textTransform: "uppercase", fontWeight: "700", color: "var(--text-secondary)", letterSpacing: "0.05em", display: "flex", alignItems: "center", gap: "0.25rem" }}>
-                <MapPin size={12} color="var(--primary-emerald)" /> Location
+              <div style={{ fontSize: "0.72rem", textTransform: "uppercase", fontWeight: "700", color: "var(--text-secondary)", letterSpacing: "0.05em", display: "flex", alignItems: "center", gap: "0.3rem" }}>
+                <MapPin size={12} color="var(--green-primary)" /> Location / Area
               </div>
-              <div style={{ fontSize: "0.92rem", fontWeight: "600", color: "var(--text-primary)", marginTop: "0.2rem" }}>
+              <div style={{ fontSize: "0.92rem", fontWeight: "600", color: "var(--text-primary)", marginTop: "0.25rem" }}>
                 {editedData.location_text || "To be captured from GPS"}
               </div>
             </div>
           </div>
 
-          <div style={{ backgroundColor: "var(--bg-subtle)", padding: "0.85rem 1rem", borderRadius: "8px", border: "1px solid var(--border-subtle)", marginBottom: "1.25rem" }}>
-            <div style={{ fontSize: "0.72rem", textTransform: "uppercase", fontWeight: "700", color: "var(--text-secondary)", letterSpacing: "0.05em", display: "flex", alignItems: "center", gap: "0.25rem", marginBottom: "0.25rem" }}>
-              <FileText size={12} /> Complaint Summary Description
+          <div style={{ backgroundColor: "var(--white)", padding: "1rem 1.25rem", borderRadius: "var(--radius-md)", border: "1px solid var(--border)", marginBottom: "1.25rem" }}>
+            <div style={{ fontSize: "0.72rem", textTransform: "uppercase", fontWeight: "700", color: "var(--text-secondary)", letterSpacing: "0.05em", display: "flex", alignItems: "center", gap: "0.3rem", marginBottom: "0.35rem" }}>
+              <FileText size={13} color="var(--green-primary)" /> Complaint Summary Description
             </div>
-            <div style={{ fontSize: "0.92rem", color: "var(--text-primary)", lineHeight: "1.5" }}>
+            <div style={{ fontSize: "0.92rem", color: "var(--text-primary)", lineHeight: "1.55" }}>
               {editedData.description}
             </div>
           </div>
 
-          <div style={{ display: "flex", gap: "0.75rem", justifyContent: "flex-end", flexWrap: "wrap" }}>
-            <button className="btn btn-outline btn-sm" onClick={() => setIsEditing(true)}>
+          <div style={{ display: "flex", gap: "0.75rem", justifyContent: "flex-end", flexWrap: "wrap", alignItems: "center" }}>
+            <button className="btn btn-secondary btn-sm" onClick={() => setIsEditing(true)}>
               <Edit3 size={15} />
               <span>Edit Details</span>
             </button>

@@ -2,6 +2,8 @@ package com.janseva.config;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.Statement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -228,7 +230,14 @@ public class DatabaseSchemaVerifier implements CommandLineRunner {
                 "ALTER TABLE grievances ALTER COLUMN resolved_at TYPE VARCHAR(64) USING resolved_at::text",
                 "ALTER TABLE grievances ALTER COLUMN verified_at TYPE VARCHAR(64) USING verified_at::text",
                 "ALTER TABLE grievance_status_history ALTER COLUMN created_at TYPE VARCHAR(64) USING created_at::text",
-                "ALTER TABLE audit_logs ALTER COLUMN created_at TYPE VARCHAR(64) USING created_at::text"
+                "ALTER TABLE audit_logs ALTER COLUMN created_at TYPE VARCHAR(64) USING created_at::text",
+                "ALTER TABLE locations ALTER COLUMN created_at TYPE VARCHAR(64) USING created_at::text",
+                "ALTER TABLE ai_analysis ALTER COLUMN created_at TYPE VARCHAR(64) USING created_at::text",
+                "ALTER TABLE escalations ALTER COLUMN created_at TYPE VARCHAR(64) USING created_at::text",
+                "ALTER TABLE incident_grievances ALTER COLUMN created_at TYPE VARCHAR(64) USING created_at::text",
+                "ALTER TABLE incidents ALTER COLUMN created_at TYPE VARCHAR(64) USING created_at::text",
+                "ALTER TABLE users ALTER COLUMN created_at TYPE VARCHAR(64) USING created_at::text",
+                "ALTER TABLE departments ALTER COLUMN created_at TYPE VARCHAR(64) USING created_at::text"
             };
             for (String sql : alterCols) {
                 try {
@@ -243,6 +252,9 @@ public class DatabaseSchemaVerifier implements CommandLineRunner {
             stmt.execute("CREATE INDEX IF NOT EXISTS idx_grievances_department ON grievances(department)");
             stmt.execute("CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)");
             stmt.execute("CREATE INDEX IF NOT EXISTS idx_grievance_assignment_grievance ON grievance_assignment_history(grievance_id)");
+
+            seedDemoWorkersIfMissingPostgres(conn);
+            correctDepartmentMismatchesIfPresent(conn);
         }
     }
 
@@ -420,6 +432,7 @@ public class DatabaseSchemaVerifier implements CommandLineRunner {
             addSqliteColumnIfNotExists(conn, "grievances", "actual_resolution_duration", "INTEGER");
 
             seedDemoWorkersIfMissing(conn);
+            correctDepartmentMismatchesIfPresent(conn);
         }
     }
 
@@ -441,6 +454,82 @@ public class DatabaseSchemaVerifier implements CommandLineRunner {
             }
         } catch (Exception ex) {
             log.warn("Could not check/add SQLite column {}.{}: {}", tableName, columnName, ex.getMessage());
+        }
+    }
+
+    private void seedDemoWorkersIfMissingPostgres(Connection conn) {
+        Object[][] depts = {
+            {"Water Department", "WATER", "Municipal Water Supply and Sewage Management"},
+            {"Public Works Department", "PWD", "Roads, Bridges, and Public Infrastructure"},
+            {"Electricity Department", "ELEC", "Power Grid, Transformers, and Supply Lines"},
+            {"Sanitation Department", "SAN", "Public Cleanliness and Garbage Collection"},
+            {"Municipal Drainage Department", "DRAIN", "Storm Water, Drains, and Sewer Lines"},
+            {"Electrical & Lighting Department", "LIGHT", "Streetlights and Public Area Illuminations"},
+            {"Sanitation & Waste Department", "WASTE", "Solid Waste Management and Landfills"},
+            {"Public Health Department", "HEALTH", "Public Health, Sanitation, and Vector Control"},
+            {"Municipal Transport Department", "TRANS", "Public Transit and Bus Shelters"},
+            {"Traffic / Parking Management", "TRAFFIC", "Traffic Signals, Parking, and Road Obstructions"}
+        };
+        for (Object[] d : depts) {
+            try (PreparedStatement insertDept = conn.prepareStatement(
+                    "INSERT INTO departments (name, code, description) VALUES (?, ?, ?) ON CONFLICT (name) DO NOTHING")) {
+                insertDept.setString(1, (String) d[0]);
+                insertDept.setString(2, (String) d[1]);
+                insertDept.setString(3, (String) d[2]);
+                insertDept.executeUpdate();
+            } catch (Exception ignored) {}
+        }
+
+        String pwdHash = "$2a$10$DWKuwUZElLsu2TWomQG4perHFtEjvJ2bpcsUTvzGjQOEjSyvFOyfm"; // password123
+        Object[][] demoWorkers = {
+            // name, email, role, dept_code, phone, zone
+            {"Manoj Kumar (Field Technician)", "water_worker@sih.gov.in", "OFFICER", "WATER", "9876543220", "Zone 1"},
+            {"Anil Sharma (Road Supervisor)", "pwd_worker@sih.gov.in", "OFFICER", "PWD", "9876543221", "Zone 2"},
+            {"Rakesh Verma (Lineman Senior)", "elec_worker@sih.gov.in", "OFFICER", "ELEC", "9876543222", "Zone 3"},
+            {"Ramesh Chand (Sanitation Officer)", "sanitation_officer@sih.gov.in", "OFFICER", "SAN", "9876543223", "Zone 1"},
+            {"Suresh Rao (Sanitation Field Lead)", "sanitation_worker@sih.gov.in", "OFFICER", "SAN", "9876543224", "Zone 4"},
+            {"Eng. Deepa Rao (Drainage Executive)", "drainage_officer@sih.gov.in", "OFFICER", "DRAIN", "9876543225", "Zone 2"},
+            {"Kamal Kant (Drainage Supervisor)", "drainage_worker@sih.gov.in", "OFFICER", "DRAIN", "9876543226", "Zone 3"},
+            {"Alok Mathur (Lighting Inspector)", "lighting_officer@sih.gov.in", "OFFICER", "LIGHT", "9876543227", "Zone 1"},
+            {"Kavita Reddy (Waste Management Lead)", "waste_officer@sih.gov.in", "OFFICER", "WASTE", "9876543228", "Zone 4"},
+            {"Dr. S. K. Mehra (Health Officer)", "health_officer@sih.gov.in", "OFFICER", "HEALTH", "9876543229", "Zone 2"},
+            {"Jagdish Singh (Transit Inspector)", "transport_officer@sih.gov.in", "OFFICER", "TRANS", "9876543230", "Zone 3"},
+            {"Sanjay Yadav (Traffic Marshal)", "traffic_worker@sih.gov.in", "OFFICER", "TRAFFIC", "9876543231", "Zone 1"}
+        };
+
+        for (Object[] worker : demoWorkers) {
+            String email = (String) worker[1];
+            String deptCode = (String) worker[3];
+            try (PreparedStatement ps = conn.prepareStatement("SELECT id FROM users WHERE email = ?")) {
+                ps.setString(1, email);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (!rs.next()) {
+                        Long deptId = null;
+                        try (PreparedStatement psDept = conn.prepareStatement("SELECT id FROM departments WHERE code = ? LIMIT 1")) {
+                            psDept.setString(1, deptCode);
+                            try (ResultSet rsDept = psDept.executeQuery()) {
+                                if (rsDept.next()) deptId = rsDept.getLong(1);
+                            }
+                        }
+                        if (deptId != null) {
+                            try (PreparedStatement insert = conn.prepareStatement(
+                                    "INSERT INTO users (name, email, password_hash, role, department_id, phone, zone) VALUES (?, ?, ?, ?, ?, ?, ?)")) {
+                                insert.setString(1, (String) worker[0]);
+                                insert.setString(2, (String) worker[1]);
+                                insert.setString(3, pwdHash);
+                                insert.setString(4, (String) worker[2]);
+                                insert.setLong(5, deptId);
+                                insert.setString(6, (String) worker[4]);
+                                insert.setString(7, (String) worker[5]);
+                                insert.executeUpdate();
+                                log.info("Seeded Postgres demo worker: {} ({})", worker[0], email);
+                            }
+                        }
+                    }
+                }
+            } catch (Exception ex) {
+                log.warn("Could not seed Postgres worker {}: {}", email, ex.getMessage());
+            }
         }
     }
 
@@ -509,6 +598,106 @@ public class DatabaseSchemaVerifier implements CommandLineRunner {
             } catch (Exception ex) {
                 log.warn("Could not seed worker {}: {}", email, ex.getMessage());
             }
+        }
+    }
+
+    private void correctDepartmentMismatchesIfPresent(Connection conn) {
+        String query = """
+            SELECT g.id, g.tracking_number, g.category, g.department, g.assigned_officer_id, 
+                   u.name, u.department_id, d.name
+            FROM grievances g
+            JOIN users u ON g.assigned_officer_id = u.id
+            JOIN departments d ON u.department_id = d.id
+            WHERE g.assigned_officer_id IS NOT NULL
+        """;
+        try (Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(query)) {
+
+            while (rs.next()) {
+                long grvId = rs.getLong(1);
+                String tracking = rs.getString(2);
+                String cat = rs.getString(3);
+                String dept = rs.getString(4);
+                long currentOfficerId = rs.getLong(5);
+                String officerName = rs.getString(6);
+                long officerDeptId = rs.getLong(7);
+                String officerDeptName = rs.getString(8);
+
+                String d1 = dept != null ? dept.toLowerCase() : "";
+                String d2 = officerDeptName != null ? officerDeptName.toLowerCase() : "";
+
+                boolean matches = d1.contains(d2) || d2.contains(d1);
+                if (!matches && d1.contains("traffic") && d2.contains("traffic")) matches = true;
+                if (!matches && d1.contains("waste") && d2.contains("waste")) matches = true;
+                if (!matches && d1.contains("sanitat") && !d1.contains("waste") && d2.contains("sanitation department")) matches = true;
+                if (!matches && d1.contains("light") && d2.contains("light")) matches = true;
+                if (!matches && (d1.contains("road") || d1.contains("pwd")) && (d2.contains("public works") || d2.contains("pwd"))) matches = true;
+
+                if (!matches) {
+                    Long correctDeptId = null;
+                    try (PreparedStatement psDept = conn.prepareStatement(
+                            "SELECT id FROM departments WHERE LOWER(name) LIKE ? OR LOWER(code) LIKE ? LIMIT 1")) {
+                        String kw = d1.contains("traffic") ? "%traffic%" :
+                                    (d1.contains("sanitat") && !d1.contains("waste")) ? "%sanitation department%" :
+                                    d1.contains("waste") ? "%waste%" :
+                                    d1.contains("light") ? "%lighting%" :
+                                    (d1.contains("road") || d1.contains("pwd")) ? "%public works%" :
+                                    d1.contains("water") ? "%water%" :
+                                    d1.contains("electri") ? "%electricity%" : "%" + d1 + "%";
+                        psDept.setString(1, kw);
+                        psDept.setString(2, kw);
+                        try (ResultSet rsDept = psDept.executeQuery()) {
+                            if (rsDept.next()) correctDeptId = rsDept.getLong(1);
+                        }
+                    }
+
+                    if (correctDeptId != null) {
+                        Long newOfficerId = null;
+                        String newOfficerName = null;
+                        try (PreparedStatement psOff = conn.prepareStatement(
+                                "SELECT id, name FROM users WHERE department_id = ? AND role = 'OFFICER' ORDER BY id ASC LIMIT 1")) {
+                            psOff.setLong(1, correctDeptId);
+                            try (ResultSet rsOff = psOff.executeQuery()) {
+                                if (rsOff.next()) {
+                                    newOfficerId = rsOff.getLong(1);
+                                    newOfficerName = rsOff.getString(2);
+                                }
+                            }
+                        }
+
+                        if (newOfficerId != null && !newOfficerId.equals(currentOfficerId)) {
+                            try (PreparedStatement up = conn.prepareStatement(
+                                    "UPDATE grievances SET assigned_officer_id = ?, assignment_notes = ? WHERE id = ?")) {
+                                up.setLong(1, newOfficerId);
+                                up.setString(2, "Department alignment correction: Reassigned to " + newOfficerName);
+                                up.setLong(3, grvId);
+                                up.executeUpdate();
+                            }
+
+                            try (PreparedStatement ah = conn.prepareStatement(
+                                    "INSERT INTO grievance_assignment_history (grievance_id, worker_id, previous_worker_id, assignment_notes, status, created_at, assigned_at) VALUES (?, ?, ?, ?, 'ACTIVE', TO_CHAR(NOW(), 'YYYY-MM-DD HH24:MI:SS'), TO_CHAR(NOW(), 'YYYY-MM-DD HH24:MI:SS'))")) {
+                                ah.setLong(1, grvId);
+                                ah.setLong(2, newOfficerId);
+                                ah.setLong(3, currentOfficerId);
+                                ah.setString(4, "System Data Correction: Corrected departmental mismatch from " + officerName + " (" + officerDeptName + ") to " + newOfficerName);
+                                ah.executeUpdate();
+                            } catch (Exception ignored) {}
+
+                            try (PreparedStatement sh = conn.prepareStatement(
+                                    "INSERT INTO grievance_status_history (grievance_id, previous_status, new_status, notes, created_at) VALUES (?, 'ASSIGNED', 'ASSIGNED', ?, TO_CHAR(NOW(), 'YYYY-MM-DD HH24:MI:SS'))")) {
+                                sh.setLong(1, grvId);
+                                sh.setString(2, "Departmental alignment: Reassigned from " + officerName + " to " + newOfficerName);
+                                sh.executeUpdate();
+                            } catch (Exception ignored) {}
+
+                            log.info("Corrected departmental mismatch for Grievance {}: {} ({}) -> {} ({})",
+                                    tracking, officerName, officerDeptName, newOfficerName, dept);
+                        }
+                    }
+                }
+            }
+        } catch (Exception ex) {
+            log.warn("Notice checking departmental mismatch: {}", ex.getMessage());
         }
     }
 }

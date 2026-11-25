@@ -295,6 +295,20 @@ public class GrievanceService {
         User worker = userRepository.findById(workerId)
                 .orElseThrow(() -> new ResourceNotFoundException("Worker/Official not found with ID " + workerId));
 
+        // Strict department compatibility validation
+        Long grvDeptId = routingService.resolveDepartmentId(g.getDepartment(), g.getCategory());
+        if (grvDeptId != null && worker.getDepartmentId() != null) {
+            if (!grvDeptId.equals(worker.getDepartmentId())) {
+                Department grvDept = departmentRepository.findById(grvDeptId).orElse(null);
+                Department workerDept = departmentRepository.findById(worker.getDepartmentId()).orElse(null);
+                String grvDeptName = grvDept != null ? grvDept.getName() : g.getDepartment();
+                String workerDeptName = workerDept != null ? workerDept.getName() : "Dept #" + worker.getDepartmentId();
+                throw new BadRequestException("Department mismatch: Official '" + worker.getName() + "' belongs to '" 
+                        + workerDeptName + "', but this grievance belongs to '" + grvDeptName 
+                        + "'. Field officers can only be assigned to grievances within their department.");
+            }
+        }
+
         Long prevWorkerId = g.getAssignedOfficerId();
         String prevStatus = g.getStatus();
 
@@ -483,9 +497,19 @@ public class GrievanceService {
     }
 
     public List<WorkerWorkloadView> getAvailableWorkers(Long departmentId) {
+        return getAvailableWorkers(departmentId, null);
+    }
+
+    public List<WorkerWorkloadView> getAvailableWorkers(Long departmentId, String departmentName) {
+        Long resolvedDeptId = departmentId;
+        if (resolvedDeptId == null && departmentName != null && !departmentName.isBlank()) {
+            resolvedDeptId = routingService.resolveDepartmentId(departmentName, null);
+        }
+        final Long targetDeptId = resolvedDeptId;
+
         List<User> workers = userRepository.findAll().stream()
                 .filter(u -> "OFFICER".equals(u.getRole()) || "DEPARTMENT_ADMIN".equals(u.getRole()))
-                .filter(u -> departmentId == null || departmentId.equals(u.getDepartmentId()))
+                .filter(u -> targetDeptId == null || targetDeptId.equals(u.getDepartmentId()))
                 .toList();
 
         Map<Long, String> deptMap = departmentRepository.findAll().stream()
