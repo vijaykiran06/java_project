@@ -558,34 +558,36 @@ export default function AdminDashboard() {
 
   return (
     <div>
-      {/* Top Header */}
+      {/* Top Header matching Figma Frame 5 */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1.75rem", flexWrap: "wrap", gap: "1rem" }}>
         <div>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", padding: "0.25rem 0.65rem", backgroundColor: "var(--status-info-bg)", border: "1px solid var(--status-info-border)", borderRadius: "6px", fontSize: "0.74rem", fontWeight: "700", color: "var(--status-info)", marginBottom: "0.4rem" }}>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", padding: "0.25rem 0.65rem", backgroundColor: "var(--green-pale)", border: "1px solid var(--green-border)", borderRadius: "var(--radius-full)", fontSize: "0.74rem", fontWeight: "700", color: "var(--green-forest)", marginBottom: "0.4rem" }}>
             <Building2 size={12} />
-            <span>Executive Municipal Oversight Console</span>
+            <span>Central Municipal Zone • New Delhi | Live Dispatch Monitoring</span>
           </div>
-          <h2 style={{ fontSize: "1.85rem", color: "var(--deep-navy)", fontWeight: "800", letterSpacing: "-0.02em" }}>
-            Admin Grievance Management & 24h SLA Operations
+          <h2 style={{ fontSize: "1.85rem", color: "var(--text-primary)", fontWeight: "800", fontFamily: "var(--font-heading)", letterSpacing: "-0.02em" }}>
+            Admin Operations Console & 24h SLA Command
           </h2>
           <p style={{ color: "var(--text-secondary)", fontSize: "0.92rem", marginTop: "0.15rem" }}>
-            Assign field workers, enforce strict 24-hour SLAs with automated escalations, and manage end-to-end municipal resolutions.
+            Assign municipal field crews, enforce strict 24-hour SLAs with automated escalations, and audit end-to-end city resolutions.
           </p>
         </div>
 
-        <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+        <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", alignItems: "center" }}>
           <button 
             className="btn btn-secondary btn-sm"
             onClick={() => { fetchDashboardData(); fetchSlaOverview(); }}
+            title="Reload live telemetry from database"
           >
             <RefreshCw size={14} />
-            <span>Refresh Operations</span>
+            <span>Refresh Telemetry</span>
           </button>
 
           <button 
             className="btn btn-primary btn-sm" 
             onClick={handleClusterDuplicates} 
             disabled={clustering}
+            title="Scan complaint vectors for duplicates"
           >
             <Layers size={15} />
             <span>{clustering ? "Scanning Embeddings..." : "Run FAISS Vector Clustering"}</span>
@@ -593,157 +595,186 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* KPI Cards Grid */}
-      <div className="stats-grid">
-        <div className="stat-card navy">
-          <div className="stat-header">
-            <span className="stat-label">Total City Complaints</span>
-            <div className="stat-icon" style={{ backgroundColor: "var(--bg-subtle)", color: "var(--deep-navy)" }}>
-              <LayoutDashboard size={17} />
+      {/* KPI Cards Grid - Restrained White Surfaces & Large Numbers (Figma Frame 5) */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "1rem", marginBottom: "1.75rem" }}>
+        <div className="card" style={{ padding: "1.35rem 1.5rem", border: "1px solid var(--border)", background: "var(--white)" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "0.5rem" }}>
+            <span style={{ fontSize: "0.74rem", fontWeight: "700", color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+              Total City Grievances
+            </span>
+            <div style={{ width: 34, height: 34, background: "var(--bg-soft)", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-primary)" }}>
+              <LayoutDashboard size={16} />
             </div>
           </div>
-          <div className="stat-value">{total}</div>
-          <div className="stat-subtext">All complaints registered across 10 departments</div>
-        </div>
-
-        <div className="stat-card amber">
-          <div className="stat-header">
-            <span className="stat-label">Active / Field Work</span>
-            <div className="stat-icon" style={{ backgroundColor: "#FFFBEB", color: "#D97706" }}>
-              <Clock size={17} />
-            </div>
+          <div style={{ fontFamily: "var(--font-heading)", fontSize: "2.35rem", fontWeight: "800", color: "var(--text-primary)", letterSpacing: "-0.04em", lineHeight: 1 }}>
+            {total}
           </div>
-          <div className="stat-value" style={{ color: "#B45309" }}>{pending}</div>
-          <div className="stat-subtext">Currently assigned to engineers & field officials</div>
-        </div>
-
-        <div className="stat-card emerald">
-          <div className="stat-header">
-            <span className="stat-label">Resolved & Confirmed</span>
-            <div className="stat-icon" style={{ backgroundColor: "#ECFDF5", color: "#047857" }}>
-              <CheckCircle2 size={17} />
-            </div>
-          </div>
-          <div className="stat-value" style={{ color: "#047857" }}>{resolved}</div>
-          <div className="stat-subtext">
-            {total > 0 ? `${Math.round((resolved / total) * 100)}% resolution success rate` : "No cases"}
+          <div style={{ fontSize: "0.78rem", color: "var(--text-muted)", marginTop: "0.4rem" }}>
+            Registered across 10 municipal departments
           </div>
         </div>
 
-        <div className="stat-card red">
-          <div className="stat-header">
-            <span className="stat-label">SLA Breached / Escalated</span>
-            <div className="stat-icon" style={{ backgroundColor: "#FEF2F2", color: "#DC2626" }}>
-              <AlertTriangle size={17} />
+        <div className="card" style={{ padding: "1.35rem 1.5rem", border: "1px solid var(--border)", background: "var(--white)" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "0.5rem" }}>
+            <span style={{ fontSize: "0.74rem", fontWeight: "700", color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+              Active In Field
+            </span>
+            <div style={{ width: 34, height: 34, background: "#FFFBEB", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", color: "#B45309" }}>
+              <Clock size={16} />
             </div>
           </div>
-          <div className="stat-value" style={{ color: "#B91C1C" }}>{escalated}</div>
-          <div className="stat-subtext">
-            {slaOverview?.breached || 0} tickets exceeded strict 24h deadline
+          <div style={{ fontFamily: "var(--font-heading)", fontSize: "2.35rem", fontWeight: "800", color: "#B45309", letterSpacing: "-0.04em", lineHeight: 1 }}>
+            {pending}
+          </div>
+          <div style={{ fontSize: "0.78rem", color: "var(--text-muted)", marginTop: "0.4rem" }}>
+            Currently assigned to engineers & field crews
+          </div>
+        </div>
+
+        <div className="card" style={{ padding: "1.35rem 1.5rem", border: "1px solid var(--border)", background: "var(--white)" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "0.5rem" }}>
+            <span style={{ fontSize: "0.74rem", fontWeight: "700", color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+              Resolved On-Time
+            </span>
+            <div style={{ width: 34, height: 34, background: "var(--green-pale)", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--green-primary)" }}>
+              <CheckCircle2 size={16} />
+            </div>
+          </div>
+          <div style={{ fontFamily: "var(--font-heading)", fontSize: "2.35rem", fontWeight: "800", color: "var(--green-primary)", letterSpacing: "-0.04em", lineHeight: 1 }}>
+            {resolved}
+          </div>
+          <div style={{ fontSize: "0.78rem", color: "var(--green-forest)", fontWeight: "600", marginTop: "0.4rem" }}>
+            {total > 0 ? `${Math.round((resolved / total) * 100)}% resolution success rate` : "No recorded cases"}
+          </div>
+        </div>
+
+        <div className="card" style={{ padding: "1.35rem 1.5rem", border: "1px solid var(--border)", background: "var(--white)" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "0.5rem" }}>
+            <span style={{ fontSize: "0.74rem", fontWeight: "700", color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+              SLA Breaches
+            </span>
+            <div style={{ width: 34, height: 34, background: "#FEF2F2", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", color: "#DC2626" }}>
+              <AlertTriangle size={16} />
+            </div>
+          </div>
+          <div style={{ fontFamily: "var(--font-heading)", fontSize: "2.35rem", fontWeight: "800", color: escalated > 0 ? "#DC2626" : "var(--text-primary)", letterSpacing: "-0.04em", lineHeight: 1 }}>
+            {escalated}
+          </div>
+          <div style={{ fontSize: "0.78rem", color: escalated > 0 ? "#DC2626" : "var(--text-muted)", fontWeight: escalated > 0 ? "600" : "400", marginTop: "0.4rem" }}>
+            {slaOverview?.breached || 0} tickets exceeded strict 24h guarantee
           </div>
         </div>
       </div>
 
-      {/* Real-time 24-Hour SLA Monitoring Panel */}
-      <div className="card" style={{ marginBottom: "1.75rem", padding: "1.25rem 1.5rem" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.85rem", flexWrap: "wrap", gap: "0.5rem" }}>
+      {/* Real-time 24-Hour SLA Monitoring Panel (Figma Frame 5 Restrained Architecture) */}
+      <div className="card" style={{ marginBottom: "1.75rem", padding: "1.35rem 1.5rem", border: "1px solid var(--border)", background: "var(--white)" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem", flexWrap: "wrap", gap: "0.5rem" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-            <Clock size={18} color="var(--primary-emerald)" />
-            <h3 style={{ fontSize: "1.1rem", color: "var(--deep-navy)", fontWeight: "700" }}>
-              24-Hour Resolution SLA Live Monitoring
+            <Clock size={17} color="var(--green-primary)" />
+            <h3 style={{ fontSize: "1.05rem", color: "var(--text-primary)", fontWeight: "800", fontFamily: "var(--font-heading)" }}>
+              24-Hour Resolution SLA Live Telemetry
             </h3>
           </div>
-          <span style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>
-            Strict 24h Window • Auto Escalation Cron: Active (30s)
+          <span style={{ fontSize: "0.78rem", color: "var(--text-secondary)", fontWeight: "600" }}>
+            Strict 24h Target Window • Auto-Escalation Engine Active
           </span>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "0.75rem" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "0.85rem" }}>
           {/* Within SLA */}
           <div 
             onClick={() => setSlaFilter(slaFilter === "WITHIN_SLA" ? "ALL" : "WITHIN_SLA")}
             style={{ 
-              backgroundColor: slaFilter === "WITHIN_SLA" ? "#ECFDF5" : "var(--bg-main)", 
-              border: `1.5px solid ${slaFilter === "WITHIN_SLA" ? "#059669" : "var(--border-color)"}`, 
-              padding: "0.85rem 1rem", 
-              borderRadius: "8px", 
+              backgroundColor: slaFilter === "WITHIN_SLA" ? "var(--green-pale)" : "var(--bg-soft)", 
+              border: `1.5px solid ${slaFilter === "WITHIN_SLA" ? "var(--green-primary)" : "var(--border)"}`, 
+              padding: "0.95rem 1rem", 
+              borderRadius: "var(--radius-md)", 
               cursor: "pointer",
-              transition: "all 0.2s"
+              transition: "all 0.15s"
             }}
           >
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <span style={{ fontSize: "0.78rem", fontWeight: "700", color: "#047857" }}>SAFE (&gt;12h)</span>
-              <CheckCircle size={15} color="#059669" />
+              <span style={{ fontSize: "0.74rem", fontWeight: "700", color: "var(--green-forest)", letterSpacing: "0.04em", textTransform: "uppercase" }}>
+                Safe (&gt;12h)
+              </span>
+              <CheckCircle size={15} color="var(--green-primary)" />
             </div>
-            <div style={{ fontSize: "1.45rem", fontWeight: "800", color: "var(--deep-navy)", marginTop: "0.2rem" }}>
+            <div style={{ fontSize: "1.5rem", fontWeight: "800", color: "var(--text-primary)", marginTop: "0.25rem", fontFamily: "var(--font-heading)" }}>
               {slaOverview?.within_sla || 0}
             </div>
-            <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>Tickets comfortably on track</div>
+            <div style={{ fontSize: "0.74rem", color: "var(--text-secondary)", marginTop: "0.15rem" }}>Tickets comfortably on track</div>
           </div>
 
           {/* Approaching Deadline (6h - 12h) */}
           <div 
             onClick={() => setSlaFilter(slaFilter === "APPROACHING" ? "ALL" : "APPROACHING")}
             style={{ 
-              backgroundColor: slaFilter === "APPROACHING" ? "#FFFBEB" : "var(--bg-main)", 
-              border: `1.5px solid ${slaFilter === "APPROACHING" ? "#D97706" : "var(--border-color)"}`, 
-              padding: "0.85rem 1rem", 
-              borderRadius: "8px", 
+              backgroundColor: slaFilter === "APPROACHING" ? "#FFFBEB" : "var(--bg-soft)", 
+              border: `1.5px solid ${slaFilter === "APPROACHING" ? "#B45309" : "var(--border)"}`, 
+              padding: "0.95rem 1rem", 
+              borderRadius: "var(--radius-md)", 
               cursor: "pointer",
-              transition: "all 0.2s"
+              transition: "all 0.15s"
             }}
           >
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <span style={{ fontSize: "0.78rem", fontWeight: "700", color: "#B45309" }}>APPROACHING (6-12h)</span>
-              <Clock size={15} color="#D97706" />
+              <span style={{ fontSize: "0.74rem", fontWeight: "700", color: "#B45309", letterSpacing: "0.04em", textTransform: "uppercase" }}>
+                Approaching (6–12h)
+              </span>
+              <Clock size={15} color="#B45309" />
             </div>
-            <div style={{ fontSize: "1.45rem", fontWeight: "800", color: "#B45309", marginTop: "0.2rem" }}>
+            <div style={{ fontSize: "1.5rem", fontWeight: "800", color: "#B45309", marginTop: "0.25rem", fontFamily: "var(--font-heading)" }}>
               {slaOverview?.approaching_deadline || 0}
             </div>
-            <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>Supervisors notified</div>
+            <div style={{ fontSize: "0.74rem", color: "var(--text-secondary)", marginTop: "0.15rem" }}>Supervisors notified</div>
           </div>
 
           {/* Due Soon (<6h) */}
           <div 
             onClick={() => setSlaFilter(slaFilter === "APPROACHING" ? "ALL" : "APPROACHING")}
             style={{ 
-              backgroundColor: "var(--bg-main)", 
-              border: "1.5px solid var(--border-color)", 
-              padding: "0.85rem 1rem", 
-              borderRadius: "8px",
-              cursor: "pointer"
+              backgroundColor: "var(--bg-soft)", 
+              border: "1.5px solid var(--border)", 
+              padding: "0.95rem 1rem", 
+              borderRadius: "var(--radius-md)", 
+              cursor: "pointer",
+              transition: "all 0.15s"
             }}
           >
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <span style={{ fontSize: "0.78rem", fontWeight: "700", color: "#EA580C" }}>CRITICAL DUE (&lt;6h)</span>
-              <AlertTriangle size={15} color="#EA580C" />
+              <span style={{ fontSize: "0.74rem", fontWeight: "700", color: "#DC2626", letterSpacing: "0.04em", textTransform: "uppercase" }}>
+                Critical Due (&lt;6h)
+              </span>
+              <AlertTriangle size={15} color="#DC2626" />
             </div>
-            <div style={{ fontSize: "1.45rem", fontWeight: "800", color: "#EA580C", marginTop: "0.2rem" }}>
+            <div style={{ fontSize: "1.5rem", fontWeight: "800", color: "#DC2626", marginTop: "0.25rem", fontFamily: "var(--font-heading)" }}>
               {(slaOverview?.critical_due_soon || 0) + (slaOverview?.urgent || 0)}
             </div>
-            <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>Immediate action required</div>
+            <div style={{ fontSize: "0.74rem", color: "var(--text-secondary)", marginTop: "0.15rem" }}>Immediate dispatch needed</div>
           </div>
 
           {/* SLA Breached */}
           <div 
             onClick={() => setSlaFilter(slaFilter === "BREACHED" ? "ALL" : "BREACHED")}
             style={{ 
-              backgroundColor: slaFilter === "BREACHED" ? "#FEF2F2" : "var(--bg-main)", 
-              border: `1.5px solid ${slaFilter === "BREACHED" ? "#DC2626" : "var(--border-color)"}`, 
-              padding: "0.85rem 1rem", 
-              borderRadius: "8px", 
+              backgroundColor: slaFilter === "BREACHED" ? "#FEF2F2" : "var(--bg-soft)", 
+              border: `1.5px solid ${slaFilter === "BREACHED" ? "#DC2626" : "var(--border)"}`, 
+              padding: "0.95rem 1rem", 
+              borderRadius: "var(--radius-md)", 
               cursor: "pointer",
-              transition: "all 0.2s"
+              transition: "all 0.15s"
             }}
           >
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <span style={{ fontSize: "0.78rem", fontWeight: "700", color: "#B91C1C" }}>SLA BREACHED</span>
+              <span style={{ fontSize: "0.74rem", fontWeight: "700", color: "#DC2626", letterSpacing: "0.04em", textTransform: "uppercase" }}>
+                SLA Breached
+              </span>
               <ShieldAlert size={15} color="#DC2626" />
             </div>
-            <div style={{ fontSize: "1.45rem", fontWeight: "800", color: "#B91C1C", marginTop: "0.2rem" }}>
+            <div style={{ fontSize: "1.5rem", fontWeight: "800", color: "#DC2626", marginTop: "0.25rem", fontFamily: "var(--font-heading)" }}>
               {slaOverview?.breached || 0}
             </div>
-            <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>Auto-escalated to Executive</div>
+            <div style={{ fontSize: "0.74rem", color: "var(--text-secondary)", marginTop: "0.15rem" }}>Auto-escalated to Executive</div>
           </div>
         </div>
       </div>
@@ -951,18 +982,23 @@ export default function AdminDashboard() {
 
                     return (
                       <tr key={g.id}>
-                        {/* 1. ID */}
+                        {/* 1. ID - Figma Monospace Civic Badge */}
                         <td>
                           <span 
                             onClick={() => handleOpenDetailModal(g)}
                             style={{ 
-                              fontFamily: "var(--font-heading)", 
+                              fontFamily: "'Courier New', monospace", 
                               fontWeight: "700", 
-                              color: "var(--deep-navy)", 
+                              color: "var(--green-primary)", 
+                              backgroundColor: "var(--green-pale)",
+                              padding: "0.2rem 0.5rem",
+                              borderRadius: "4px",
+                              border: "1px solid var(--green-border)",
                               cursor: "pointer",
-                              textDecoration: "underline",
-                              fontSize: "0.88rem"
+                              fontSize: "0.8rem",
+                              letterSpacing: "0.02em"
                             }}
+                            title="Click to view full case telemetry & audit trail"
                           >
                             {g.tracking_number}
                           </span>
