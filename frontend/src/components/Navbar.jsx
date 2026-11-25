@@ -103,8 +103,28 @@ export default function Navbar() {
             </Link>
           )}
 
+          {/* Profile Navigation Tab */}
+          <Link
+            to="/profile"
+            className={`nav-tab ${location.pathname === "/profile" ? "active" : ""}`}
+            title="Manage your profile & civic jurisdiction"
+          >
+            <User size={17} />
+            <span>My Profile</span>
+          </Link>
+
           {/* User Profile Pill */}
-          <div className="user-profile-pill">
+          <Link 
+            to="/profile" 
+            className="user-profile-pill" 
+            title="View & Edit Profile"
+            style={{ 
+              textDecoration: "none", 
+              border: location.pathname === "/profile" ? "1.5px solid var(--green-primary)" : "1px solid var(--border)",
+              backgroundColor: location.pathname === "/profile" ? "var(--green-pale)" : "var(--white)",
+              transition: "all 0.15s ease"
+            }}
+          >
             <div className="user-avatar-circle">
               {user.name ? user.name.charAt(0).toUpperCase() : "U"}
             </div>
@@ -116,7 +136,7 @@ export default function Navbar() {
                 {badge?.text}
               </span>
             </div>
-          </div>
+          </Link>
 
           {/* Logout Button */}
           <button 

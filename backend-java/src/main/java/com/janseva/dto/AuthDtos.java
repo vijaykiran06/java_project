@@ -11,13 +11,23 @@ public final class AuthDtos {
 
     public record LoginRequest(String email, String password) {}
 
+    public record ProfileUpdateRequest(
+            String name,
+            String phone,
+            String zone,
+            @JsonProperty("current_password") String currentPassword,
+            @JsonProperty("new_password") String newPassword
+    ) {}
+
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record UserSummary(
             Long id,
             String name,
             String email,
             String role,
-            @JsonProperty("department_id") Long departmentId
+            @JsonProperty("department_id") Long departmentId,
+            String phone,
+            String zone
     ) {}
 
     public record AuthResponse(String message, String token, UserSummary user) {}

@@ -7,7 +7,7 @@ import {
   PlusCircle, MapPin, Calendar, CheckCircle2, XCircle, ShieldCheck,
   RefreshCw, Search, Filter, LayoutGrid, List, ChevronRight, Clock,
   AlertTriangle, Building2, Sparkles, X, UserCheck, Phone, FileCheck2,
-  RotateCcw, Zap
+  RotateCcw, Zap, User
 } from "lucide-react";
 
 function StatusBadge({ status }) {
@@ -182,6 +182,15 @@ export default function CitizenDashboard() {
             <RefreshCw size={14} />
             <span>Refresh Status</span>
           </button>
+
+          <Link 
+            to="/profile" 
+            className="btn btn-outline btn-sm"
+            title="My Citizen Profile & Settings"
+          >
+            <User size={14} />
+            <span>My Profile</span>
+          </Link>
 
           <Link 
             to="/citizen/grievance/new" 

@@ -9,6 +9,7 @@ import OfficerDashboard from "./components/OfficerDashboard";
 import AdminDashboard from "./components/AdminDashboard";
 import NewGrievancePage from "./pages/NewGrievancePage";
 import HomePage from "./pages/HomePage";
+import ProfilePage from "./pages/ProfilePage";
 
 const ProtectedRoute = ({ children }) => {
   const { token, loading } = useContext(AuthContext);
@@ -68,6 +69,14 @@ function AppContent() {
           <Navbar />
           <main className="main-content">
             <ProtectedRoute><NewGrievancePage /></ProtectedRoute>
+          </main>
+        </div>
+      } />
+      <Route path="/profile" element={
+        <div className="app-container">
+          <Navbar />
+          <main className="main-content">
+            <ProtectedRoute><ProfilePage /></ProtectedRoute>
           </main>
         </div>
       } />

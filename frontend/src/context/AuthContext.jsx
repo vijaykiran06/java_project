@@ -70,6 +70,21 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
+  const updateProfile = async (profileData) => {
+    const res = await fetch("/api/auth/profile", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify(profileData)
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || data.error || "Profile update failed");
+    setUser(data);
+    return data;
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -79,6 +94,8 @@ export const AuthProvider = ({ children }) => {
         login,
         register,
         logout,
+        updateProfile,
+        fetchUser: () => fetchUser(token)
       }}
     >
       {children}

@@ -2,6 +2,7 @@ package com.janseva.service;
 
 import com.janseva.dto.AuthDtos.AuthResponse;
 import com.janseva.dto.AuthDtos.LoginRequest;
+import com.janseva.dto.AuthDtos.ProfileUpdateRequest;
 import com.janseva.dto.AuthDtos.RegisterRequest;
 import com.janseva.dto.AuthDtos.UserSummary;
 import com.janseva.entity.User;
@@ -49,7 +50,7 @@ public class AuthService {
         String token = jwtService.generateToken(saved.getId(), saved.getRole(), saved.getEmail());
 
         UserSummary summary = new UserSummary(
-                saved.getId(), saved.getName(), saved.getEmail(), saved.getRole(), null);
+                saved.getId(), saved.getName(), saved.getEmail(), saved.getRole(), null, saved.getPhone(), saved.getZone());
 
         return new AuthResponse("Citizen account registered successfully.", token, summary);
     }
@@ -69,14 +70,44 @@ public class AuthService {
 
         String token = jwtService.generateToken(user.getId(), user.getRole(), user.getEmail());
         UserSummary summary = new UserSummary(
-                user.getId(), user.getName(), user.getEmail(), user.getRole(), user.getDepartmentId());
+                user.getId(), user.getName(), user.getEmail(), user.getRole(), user.getDepartmentId(), user.getPhone(), user.getZone());
 
         return new AuthResponse("Login successful.", token, summary);
     }
 
     public UserSummary toUserSummary(User user) {
         return new UserSummary(
-                user.getId(), user.getName(), user.getEmail(), user.getRole(), user.getDepartmentId());
+                user.getId(), user.getName(), user.getEmail(), user.getRole(), user.getDepartmentId(), user.getPhone(), user.getZone());
+    }
+
+    @Transactional
+    public UserSummary updateProfile(Long userId, ProfileUpdateRequest req) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BadRequestException("User account not found."));
+
+        if (req != null) {
+            if (req.name() != null && !req.name().trim().isEmpty()) {
+                user.setName(req.name().trim());
+            }
+            if (req.phone() != null) {
+                user.setPhone(req.phone().trim());
+            }
+            if (req.zone() != null && !req.zone().trim().isEmpty()) {
+                user.setZone(req.zone().trim());
+            }
+            if (req.newPassword() != null && !req.newPassword().trim().isEmpty()) {
+                if (req.currentPassword() == null || !passwordEncoder.matches(req.currentPassword(), user.getPasswordHash())) {
+                    throw new BadRequestException("Current password verification failed.");
+                }
+                if (req.newPassword().trim().length() < 6) {
+                    throw new BadRequestException("New password must be at least 6 characters.");
+                }
+                user.setPasswordHash(passwordEncoder.encode(req.newPassword().trim()));
+            }
+        }
+
+        User saved = userRepository.save(user);
+        return toUserSummary(saved);
     }
 
     private boolean isBlank(String val) {
