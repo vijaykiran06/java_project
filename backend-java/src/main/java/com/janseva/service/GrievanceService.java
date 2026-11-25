@@ -446,6 +446,42 @@ public class GrievanceService {
         return toView(saved);
     }
 
+    @Transactional
+    public GrievanceView rejectGrievance(Long grievanceId, String reason, User actor) {
+        Grievance g = grievanceRepository.findById(grievanceId)
+                .orElseThrow(() -> new ResourceNotFoundException("Grievance not found."));
+
+        String prevStatus = g.getStatus();
+        String rejectReason = reason != null && !reason.isBlank() ? reason.trim() : "Rejected by municipal authority";
+
+        g.setStatus("REJECTED");
+        g.setResolutionNotes("Rejected: " + rejectReason);
+        g.setSlaStatus("REJECTED");
+        Grievance saved = grievanceRepository.save(g);
+
+        GrievanceStatusHistory statusHist = new GrievanceStatusHistory();
+        statusHist.setGrievanceId(grievanceId);
+        statusHist.setPreviousStatus(prevStatus);
+        statusHist.setNewStatus("REJECTED");
+        if (actor != null) {
+            statusHist.setChangedByUserId(actor.getId());
+        }
+        statusHist.setNotes("Complaint rejected: " + rejectReason);
+        historyRepository.save(statusHist);
+
+        if (actor != null) {
+            AuditLog audit = new AuditLog();
+            audit.setUserId(actor.getId());
+            audit.setAction("GRIEVANCE_REJECTED");
+            audit.setEntityName("grievances");
+            audit.setEntityId(g.getTrackingNumber());
+            audit.setDetails("Rejected by " + actor.getName() + " with reason: " + rejectReason);
+            auditLogRepository.save(audit);
+        }
+
+        return toView(saved);
+    }
+
     public List<WorkerWorkloadView> getAvailableWorkers(Long departmentId) {
         List<User> workers = userRepository.findAll().stream()
                 .filter(u -> "OFFICER".equals(u.getRole()) || "DEPARTMENT_ADMIN".equals(u.getRole()))

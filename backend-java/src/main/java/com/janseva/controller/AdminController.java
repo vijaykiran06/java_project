@@ -3,6 +3,7 @@ package com.janseva.controller;
 import com.janseva.dto.GrievanceDtos.AssignWorkerRequest;
 import com.janseva.dto.GrievanceDtos.GrievanceListResponse;
 import com.janseva.dto.GrievanceDtos.GrievanceView;
+import com.janseva.dto.GrievanceDtos.RejectGrievanceRequest;
 import com.janseva.dto.GrievanceDtos.ReopenGrievanceRequest;
 import com.janseva.dto.GrievanceDtos.ResolveGrievanceRequest;
 import com.janseva.dto.GrievanceDtos.SlaMonitoringOverview;
@@ -82,7 +83,17 @@ public class AdminController {
             @RequestBody(required = false) ReopenGrievanceRequest request,
             @AuthenticationPrincipal CustomUserDetails principal) {
         String reason = request != null ? request.reason() : "Reopened by administrator";
-        GrievanceView updated = grievanceService.reopenGrievance(id, reason, principal.getUser());
+        GrievanceView updated = grievanceService.reopenGrievance(id, reason, principal != null ? principal.getUser() : null);
+        return ResponseEntity.ok(updated);
+    }
+
+    @PostMapping("/grievances/{id}/reject")
+    public ResponseEntity<GrievanceView> rejectGrievance(
+            @PathVariable("id") Long id,
+            @RequestBody(required = false) RejectGrievanceRequest request,
+            @AuthenticationPrincipal CustomUserDetails principal) {
+        String reason = request != null && request.reason() != null ? request.reason() : "Rejected by municipal administrator";
+        GrievanceView updated = grievanceService.rejectGrievance(id, reason, principal != null ? principal.getUser() : null);
         return ResponseEntity.ok(updated);
     }
 

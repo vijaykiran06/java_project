@@ -619,12 +619,12 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 }
 .badge-resolved .badge-dot, .badge-citizen_verified .badge-dot { background-color: var(--status-success); }
 
-.badge-escalated, .badge-reopened {
+.badge-escalated, .badge-reopened, .badge-rejected {
   background-color: var(--status-critical-bg);
   color: var(--status-critical);
   border: 1px solid var(--status-critical-border);
 }
-.badge-escalated .badge-dot, .badge-reopened .badge-dot { background-color: var(--status-critical); }
+.badge-escalated .badge-dot, .badge-reopened .badge-dot, .badge-rejected .badge-dot { background-color: var(--status-critical); }
 
 .badge-critical {
   background-color: #FEF2F2;

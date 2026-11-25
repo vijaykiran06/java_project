@@ -32,7 +32,8 @@ import {
   X,
   Send,
   CheckCircle,
-  Briefcase
+  Briefcase,
+  XCircle
 } from "lucide-react";
 
 export default function AdminDashboard() {
@@ -73,6 +74,10 @@ export default function AdminDashboard() {
   const [reopenModalGrievance, setReopenModalGrievance] = useState(null);
   const [reopenReason, setReopenReason] = useState("");
   const [submittingReopen, setSubmittingReopen] = useState(false);
+
+  const [rejectModalGrievance, setRejectModalGrievance] = useState(null);
+  const [rejectReason, setRejectReason] = useState("");
+  const [submittingReject, setSubmittingReject] = useState(false);
 
   const [detailModalGrievance, setDetailModalGrievance] = useState(null);
   const [detailHistory, setDetailHistory] = useState([]);
@@ -372,6 +377,58 @@ export default function AdminDashboard() {
       alert("Error reopening grievance");
     } finally {
       setSubmittingReopen(false);
+    }
+  };
+
+  // Open Reject Modal
+  const handleOpenRejectModal = (g) => {
+    setRejectModalGrievance(g);
+    setRejectReason("Invalid or incomplete complaint details");
+  };
+
+  const handleRejectSubmit = async (e) => {
+    e.preventDefault();
+    if (!rejectModalGrievance) return;
+    const finalReason = rejectReason.trim() || "Rejected by municipal authority";
+    setSubmittingReject(true);
+
+    try {
+      let res = await fetch(`/api/admin/grievances/${rejectModalGrievance.id}/reject`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ reason: finalReason }),
+      });
+      if (!res.ok) {
+        res = await fetch(`/api/grievances/${rejectModalGrievance.id}/reject`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ reason: finalReason }),
+        });
+      }
+
+      if (res.ok) {
+        alert(`Grievance ${rejectModalGrievance.tracking_number} has been rejected.`);
+        setRejectModalGrievance(null);
+        if (detailModalGrievance && detailModalGrievance.id === rejectModalGrievance.id) {
+          setDetailModalGrievance(null);
+        }
+        await fetchDashboardData();
+        await fetchSlaOverview();
+      } else {
+        const err = await res.json();
+        alert(err.message || "Failed to reject grievance");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error rejecting grievance");
+    } finally {
+      setSubmittingReject(false);
     }
   };
 
@@ -817,6 +874,7 @@ export default function AdminDashboard() {
                 <option value="ASSIGNED">ASSIGNED</option>
                 <option value="IN_PROGRESS">IN_PROGRESS</option>
                 <option value="REOPENED">REOPENED</option>
+                <option value="REJECTED">REJECTED</option>
               </select>
 
               {/* SLA Filter */}
@@ -1012,7 +1070,7 @@ export default function AdminDashboard() {
                             </button>
 
                             {/* Mark Resolved Button */}
-                            {!isResolved && (
+                            {!isResolved && g.status !== "REJECTED" && (
                               <button
                                 className="btn btn-primary btn-sm"
                                 style={{ padding: "0.3rem 0.6rem", fontSize: "0.78rem" }}
@@ -1021,6 +1079,19 @@ export default function AdminDashboard() {
                               >
                                 <CheckCircle size={13} />
                                 <span>Resolve</span>
+                              </button>
+                            )}
+
+                            {/* Reject Button (if not resolved or rejected) */}
+                            {!isResolved && g.status !== "REJECTED" && (
+                              <button
+                                className="btn btn-outline btn-sm"
+                                style={{ padding: "0.3rem 0.55rem", fontSize: "0.78rem", color: "#DC2626", borderColor: "#FECACA" }}
+                                onClick={() => handleOpenRejectModal(g)}
+                                title="Reject Complaint"
+                              >
+                                <XCircle size={13} />
+                                <span>Reject</span>
                               </button>
                             )}
 
@@ -1591,12 +1662,168 @@ export default function AdminDashboard() {
             )}
 
             {/* Audit History Timeline */}
-            <div>
+            <div style={{ marginBottom: "1.25rem" }}>
               <div style={{ fontSize: "0.78rem", textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--text-secondary)", fontWeight: "700", marginBottom: "0.5rem" }}>
                 Lifecycle Audit Trail ({detailHistory.length} Events)
               </div>
               <GrievanceTimeline history={detailHistory} />
             </div>
+
+            {/* Executive Authority Actions Toolbar (Admin Powers) */}
+            <div style={{ paddingTop: "1.25rem", borderTop: "2px solid #E2E8F0", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div style={{ fontSize: "0.82rem", textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--deep-navy)", fontWeight: "800", display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                  <ShieldAlert size={16} color="var(--primary-emerald)" />
+                  <span>Executive Administrative Actions</span>
+                </div>
+                <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>
+                  Current Status: <strong style={{ color: "var(--deep-navy)" }}>{detailModalGrievance.status}</strong>
+                </div>
+              </div>
+
+              <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap", alignItems: "center" }}>
+                {/* 1. Assign / Reassign Field Official */}
+                <button
+                  className="btn btn-outline btn-sm"
+                  onClick={() => {
+                    handleOpenAssignModal(detailModalGrievance);
+                  }}
+                  style={{ display: "flex", alignItems: "center", gap: "0.4rem", padding: "0.5rem 0.9rem", fontWeight: "700" }}
+                >
+                  <UserPlus size={15} />
+                  <span>{detailModalGrievance.assigned_officer_id ? "Reassign Field Worker" : "Assign Field Worker"}</span>
+                </button>
+
+                {/* 2. Resolve Complaint Button */}
+                {!["RESOLVED", "CITIZEN_VERIFIED", "CLOSED", "REJECTED"].includes(detailModalGrievance.status) && (
+                  <button
+                    className="btn btn-primary btn-sm"
+                    onClick={() => {
+                      handleOpenResolveModal(detailModalGrievance);
+                    }}
+                    style={{ display: "flex", alignItems: "center", gap: "0.4rem", backgroundColor: "#059669", padding: "0.5rem 1rem", fontWeight: "700" }}
+                  >
+                    <CheckCircle2 size={15} />
+                    <span>Resolve Complaint</span>
+                  </button>
+                )}
+
+                {/* 3. Reject Complaint Button (Admin Executive Power) */}
+                {!["REJECTED", "CLOSED"].includes(detailModalGrievance.status) && (
+                  <button
+                    className="btn btn-sm"
+                    onClick={() => {
+                      handleOpenRejectModal(detailModalGrievance);
+                    }}
+                    style={{ display: "flex", alignItems: "center", gap: "0.4rem", backgroundColor: "#DC2626", color: "#FFFFFF", border: "none", borderRadius: "6px", padding: "0.5rem 1rem", fontWeight: "700", cursor: "pointer", boxShadow: "0 2px 4px rgba(220, 38, 38, 0.2)" }}
+                  >
+                    <XCircle size={15} />
+                    <span>Reject Complaint</span>
+                  </button>
+                )}
+
+                {/* 4. Reopen Case Button (if resolved or rejected) */}
+                {["RESOLVED", "CITIZEN_VERIFIED", "CLOSED", "REJECTED"].includes(detailModalGrievance.status) && (
+                  <button
+                    className="btn btn-sm"
+                    onClick={() => {
+                      handleOpenReopenModal(detailModalGrievance);
+                    }}
+                    style={{ display: "flex", alignItems: "center", gap: "0.4rem", backgroundColor: "#D97706", color: "#FFFFFF", border: "none", borderRadius: "6px", padding: "0.5rem 1rem", fontWeight: "700", cursor: "pointer" }}
+                  >
+                    <RotateCcw size={15} />
+                    <span>Reopen / Restart 24h SLA</span>
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Reject Grievance */}
+      {rejectModalGrievance && (
+        <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(15, 23, 42, 0.6)", zIndex: 1100, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" }}>
+          <div style={{ backgroundColor: "#FFFFFF", borderRadius: "12px", width: "100%", maxWidth: "540px", padding: "1.75rem", boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.25rem", paddingBottom: "0.75rem", borderBottom: "1px solid var(--border-color)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+                <div style={{ width: "36px", height: "36px", borderRadius: "8px", backgroundColor: "#FEE2E2", color: "#DC2626", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <XCircle size={20} />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: "1.15rem", fontWeight: "800", color: "#991B1B", margin: 0 }}>
+                    Reject Grievance
+                  </h3>
+                  <div style={{ fontSize: "0.78rem", color: "var(--text-secondary)" }}>
+                    Tracking: <strong>{rejectModalGrievance.tracking_number}</strong> • {rejectModalGrievance.department}
+                  </div>
+                </div>
+              </div>
+              <button onClick={() => setRejectModalGrievance(null)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-secondary)" }}>
+                <X size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={handleRejectSubmit}>
+              <div style={{ marginBottom: "1rem" }}>
+                <label style={{ display: "block", fontSize: "0.82rem", fontWeight: "700", color: "var(--deep-navy)", marginBottom: "0.4rem" }}>
+                  Select Preset Rejection Reason:
+                </label>
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                  {[
+                    "Invalid or incomplete complaint details",
+                    "Outside municipal corporation jurisdiction",
+                    "Duplicate grievance already being handled",
+                    "Private property dispute / not a public civic issue",
+                    "False or fraudulent report"
+                  ].map((preset) => (
+                    <label key={preset} style={{ display: "flex", alignItems: "center", gap: "0.6rem", fontSize: "0.83rem", color: "#374151", cursor: "pointer", padding: "0.45rem 0.75rem", borderRadius: "6px", backgroundColor: rejectReason === preset ? "#FEE2E2" : "#F9FAFB", border: `1px solid ${rejectReason === preset ? "#FCA5A5" : "#E5E7EB"}`, transition: "all 0.15s ease" }}>
+                      <input
+                        type="radio"
+                        name="preset_reason"
+                        checked={rejectReason === preset}
+                        onChange={() => setRejectReason(preset)}
+                      />
+                      <span>{preset}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div style={{ marginBottom: "1.25rem" }}>
+                <label style={{ display: "block", fontSize: "0.82rem", fontWeight: "700", color: "var(--deep-navy)", marginBottom: "0.3rem" }}>
+                  Official Reason & Notes to Citizen *
+                </label>
+                <textarea
+                  className="form-control"
+                  rows={3}
+                  placeholder="Explain why this grievance is being rejected. This notice will be visible to the citizen..."
+                  value={rejectReason}
+                  onChange={(e) => setRejectReason(e.target.value)}
+                  required
+                  style={{ width: "100%", padding: "0.65rem", borderRadius: "8px", border: "1px solid var(--border-color)", fontSize: "0.85rem" }}
+                />
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.6rem" }}>
+                <button
+                  type="button"
+                  className="btn btn-outline"
+                  onClick={() => setRejectModalGrievance(null)}
+                  disabled={submittingReject}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="btn btn-sm"
+                  style={{ backgroundColor: "#DC2626", color: "#FFFFFF", border: "none", borderRadius: "6px", padding: "0.5rem 1.25rem", fontWeight: "700", cursor: "pointer" }}
+                  disabled={submittingReject}
+                >
+                  {submittingReject ? "Rejecting..." : "Confirm Rejection"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

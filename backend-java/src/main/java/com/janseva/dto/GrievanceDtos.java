@@ -42,6 +42,10 @@ public final class GrievanceDtos {
             String reason
     ) {}
 
+    public record RejectGrievanceRequest(
+            String reason
+    ) {}
+
     public record WorkerWorkloadView(
             Long id,
             String name,

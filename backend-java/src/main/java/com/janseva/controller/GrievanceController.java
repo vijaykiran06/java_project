@@ -6,6 +6,7 @@ import com.janseva.dto.GrievanceDtos.CreateGrievanceResponse;
 import com.janseva.dto.GrievanceDtos.GrievanceDetailResponse;
 import com.janseva.dto.GrievanceDtos.GrievanceListResponse;
 import com.janseva.dto.GrievanceDtos.GrievanceView;
+import com.janseva.dto.GrievanceDtos.RejectGrievanceRequest;
 import com.janseva.dto.GrievanceDtos.ReopenGrievanceRequest;
 import com.janseva.dto.GrievanceDtos.ResolveGrievanceRequest;
 import com.janseva.dto.GrievanceDtos.StatusUpdateResponse;
@@ -109,6 +110,16 @@ public class GrievanceController {
             @RequestBody(required = false) ReopenGrievanceRequest request,
             @AuthenticationPrincipal CustomUserDetails principal) {
         String reason = request != null ? request.reason() : "Reopened by user";
-        return ResponseEntity.ok(grievanceService.reopenGrievance(id, reason, principal.getUser()));
+        return ResponseEntity.ok(grievanceService.reopenGrievance(id, reason, principal != null ? principal.getUser() : null));
+    }
+
+    @PostMapping("/{id}/reject")
+    @PreAuthorize("hasAnyRole('OFFICER', 'DEPARTMENT_ADMIN', 'SUPER_ADMIN')")
+    public ResponseEntity<GrievanceView> reject(
+            @PathVariable("id") Long id,
+            @RequestBody(required = false) RejectGrievanceRequest request,
+            @AuthenticationPrincipal CustomUserDetails principal) {
+        String reason = request != null && request.reason() != null ? request.reason() : "Rejected by municipal authority";
+        return ResponseEntity.ok(grievanceService.rejectGrievance(id, reason, principal != null ? principal.getUser() : null));
     }
 }
