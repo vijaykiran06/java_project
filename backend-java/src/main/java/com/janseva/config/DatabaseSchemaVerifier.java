@@ -221,6 +221,21 @@ public class DatabaseSchemaVerifier implements CommandLineRunner {
             stmt.execute("ALTER TABLE grievances ADD COLUMN IF NOT EXISTS work_performed TEXT");
             stmt.execute("ALTER TABLE grievances ADD COLUMN IF NOT EXISTS actual_resolution_duration BIGINT");
 
+            String[] alterCols = {
+                "ALTER TABLE grievances ALTER COLUMN created_at TYPE VARCHAR(64) USING created_at::text",
+                "ALTER TABLE grievances ALTER COLUMN updated_at TYPE VARCHAR(64) USING updated_at::text",
+                "ALTER TABLE grievances ALTER COLUMN sla_deadline TYPE VARCHAR(64) USING sla_deadline::text",
+                "ALTER TABLE grievances ALTER COLUMN resolved_at TYPE VARCHAR(64) USING resolved_at::text",
+                "ALTER TABLE grievances ALTER COLUMN verified_at TYPE VARCHAR(64) USING verified_at::text",
+                "ALTER TABLE grievance_status_history ALTER COLUMN created_at TYPE VARCHAR(64) USING created_at::text",
+                "ALTER TABLE audit_logs ALTER COLUMN created_at TYPE VARCHAR(64) USING created_at::text"
+            };
+            for (String sql : alterCols) {
+                try {
+                    stmt.execute(sql);
+                } catch (Exception ignored) {}
+            }
+
             // Helpful performance indexes
             stmt.execute("CREATE INDEX IF NOT EXISTS idx_grievances_citizen_id ON grievances(citizen_id)");
             stmt.execute("CREATE INDEX IF NOT EXISTS idx_grievances_officer_id ON grievances(assigned_officer_id)");
