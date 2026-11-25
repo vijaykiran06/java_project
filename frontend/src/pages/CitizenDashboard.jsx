@@ -7,7 +7,7 @@ import {
   PlusCircle, MapPin, Calendar, CheckCircle2, XCircle, ShieldCheck,
   RefreshCw, Search, Filter, LayoutGrid, List, ChevronRight, Clock,
   AlertTriangle, Building2, Sparkles, X, UserCheck, Phone, FileCheck2,
-  RotateCcw
+  RotateCcw, Zap
 } from "lucide-react";
 
 function StatusBadge({ status }) {
@@ -158,64 +158,146 @@ export default function CitizenDashboard() {
 
   return (
     <div>
-      {/* ── WELCOME HEADER ── */}
-      <div style={{
-        background: "linear-gradient(135deg, var(--green-deep) 0%, var(--green-forest) 60%, var(--green-primary) 100%)",
-        borderRadius: "var(--radius-xl)",
-        padding: "2.5rem",
-        marginBottom: "2rem",
-        position: "relative",
-        overflow: "hidden",
-      }}>
-        <div style={{
-          position: "absolute", inset: 0,
-          backgroundImage: "linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)",
-          backgroundSize: "32px 32px"
-        }} />
-        <div style={{ position: "relative", display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "1.5rem" }}>
-          <div>
-            <div style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", padding: "0.3rem 0.8rem", background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: "9999px", fontSize: "0.72rem", fontWeight: 700, color: "#A7F3D0", marginBottom: "0.85rem" }}>
-              <Sparkles size={11} />
-              AI-Powered Citizen Grievance Portal
-            </div>
-            <h1 style={{ fontFamily: "var(--font-heading)", fontSize: "1.9rem", fontWeight: 800, color: "#fff", letterSpacing: "-0.03em", marginBottom: "0.5rem" }}>
-              Welcome back, {user?.name || "Citizen"}
-            </h1>
-            <p style={{ color: "rgba(255,255,255,0.75)", fontSize: "0.95rem", lineHeight: 1.6, maxWidth: 520 }}>
-              Track your civic complaints, verify resolutions, and hold departments accountable with 24-hour SLA enforcement.
-            </p>
+      {/* ── WELCOME HEADER (Figma Frame 2) ── */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1.75rem", flexWrap: "wrap", gap: "1rem" }}>
+        <div>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", padding: "0.25rem 0.65rem", backgroundColor: "var(--green-pale)", border: "1px solid var(--green-border)", borderRadius: "var(--radius-full)", fontSize: "0.74rem", fontWeight: "700", color: "var(--green-forest)", marginBottom: "0.4rem" }}>
+            <Sparkles size={12} color="var(--green-primary)" />
+            <span>National Civic Grievance & Service Portal</span>
           </div>
-          <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
-            <Link to="/citizen/grievance/new" className="btn" style={{ background: "#fff", color: "var(--green-forest)", fontSize: "0.9rem", fontWeight: 700, padding: "0.7rem 1.4rem", boxShadow: "var(--shadow-lg)" }}>
-              <PlusCircle size={18} />
-              Report Grievance
-            </Link>
-            <button onClick={fetchGrievances} className="btn" style={{ background: "rgba(255,255,255,0.12)", color: "#fff", border: "1px solid rgba(255,255,255,0.25)", fontSize: "0.9rem", fontWeight: 600 }}>
-              <RefreshCw size={16} />
-              Refresh
-            </button>
-          </div>
+          <h1 style={{ fontFamily: "var(--font-heading)", fontSize: "2rem", fontWeight: 800, color: "var(--green-deep)", letterSpacing: "-0.03em" }}>
+            Citizen Grievance & Service Portal
+          </h1>
+          <p style={{ color: "var(--text-secondary)", fontSize: "0.92rem", marginTop: "0.2rem" }}>
+            Welcome back, <strong>{user?.name || "Citizen"}</strong> • Ward Jurisdiction Connected • 24h SLA Guarantee Active
+          </p>
+        </div>
+
+        <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", alignItems: "center" }}>
+          <button 
+            onClick={fetchGrievances} 
+            className="btn btn-secondary btn-sm"
+            title="Reload active grievance records"
+          >
+            <RefreshCw size={14} />
+            <span>Refresh Status</span>
+          </button>
+
+          <Link 
+            to="/citizen/grievance/new" 
+            className="btn btn-primary btn-sm"
+            style={{ boxShadow: "var(--shadow-green)" }}
+          >
+            <PlusCircle size={15} />
+            <span>+ Report New Grievance</span>
+          </Link>
         </div>
       </div>
 
-      {/* ── KPI STATS ── */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "1rem", marginBottom: "1.75rem" }}>
-        {[
-          { label: "Total Filed", value: stats.total, icon: ShieldCheck, iconBg: "var(--green-pale)", iconColor: "var(--green-primary)", valueColor: "var(--text-primary)" },
-          { label: "In Progress", value: stats.inProgress, icon: Clock, iconBg: "#FFFBEB", iconColor: "#D97706", valueColor: "#B45309" },
-          { label: "Resolved", value: stats.resolved, icon: CheckCircle2, iconBg: "#EFF6FF", iconColor: "#2563EB", valueColor: "#1D4ED8" },
-          { label: "Escalated", value: stats.escalated, icon: AlertTriangle, iconBg: "#FEF2F2", iconColor: "#DC2626", valueColor: "#B91C1C" },
-        ].map(({ label, value, icon: Icon, iconBg, iconColor, valueColor }) => (
-          <div key={label} className="card" style={{ padding: "1.25rem 1.5rem" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "0.75rem" }}>
-              <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.05em" }}>{label}</span>
-              <div style={{ width: 36, height: 36, background: iconBg, borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", color: iconColor }}>
-                <Icon size={17} />
-              </div>
-            </div>
-            <div style={{ fontFamily: "var(--font-heading)", fontSize: "2.25rem", fontWeight: 800, color: valueColor, letterSpacing: "-0.04em", lineHeight: 1 }}>{value}</div>
+      {/* ── AI FAST-TRACK BANNER (Figma Frame 2 Node 1:81) ── */}
+      <div 
+        style={{
+          backgroundColor: "var(--green-pale)",
+          border: "1.5px solid var(--green-border)",
+          borderRadius: "var(--radius-lg)",
+          padding: "1.25rem 1.5rem",
+          marginBottom: "1.75rem",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: "1rem"
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: "0.85rem" }}>
+          <div style={{ width: "42px", height: "42px", borderRadius: "10px", backgroundColor: "var(--green-forest)", color: "#FFFFFF", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <Zap size={22} />
           </div>
-        ))}
+          <div>
+            <div style={{ fontFamily: "var(--font-heading)", fontSize: "1rem", fontWeight: "800", color: "var(--green-deep)" }}>
+              Fast-Track AI Intake & 24h Resolution Guarantee
+            </div>
+            <div style={{ fontSize: "0.84rem", color: "var(--green-forest)", marginTop: "0.15rem" }}>
+              Facing an issue with Water Supply, Road Potholes, Garbage, or Streetlights? Speak or type in plain Hindi or English.
+            </div>
+          </div>
+        </div>
+
+        <Link to="/citizen/grievance/new" className="btn btn-primary btn-sm" style={{ padding: "0.55rem 1.15rem", whiteSpace: "nowrap" }}>
+          <PlusCircle size={15} />
+          <span>Lodge with AI Bot</span>
+        </Link>
+      </div>
+
+      {/* ── 4 RESTRICTED WHITE KPI CARDS (Figma Frame 2 Node 1:48) ── */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "1rem", marginBottom: "1.75rem" }}>
+        <div className="card" style={{ padding: "1.25rem 1.5rem", border: "1px solid var(--border)", background: "var(--white)" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "0.4rem" }}>
+            <span style={{ fontSize: "0.74rem", fontWeight: "700", color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+              Active Grievances
+            </span>
+            <span style={{ fontSize: "0.68rem", fontWeight: "700", color: "#B45309", background: "#FFFBEB", border: "1px solid #FDE68A", padding: "0.15rem 0.5rem", borderRadius: "999px" }}>
+              In Progress
+            </span>
+          </div>
+          <div style={{ fontFamily: "var(--font-heading)", fontSize: "2.25rem", fontWeight: "800", color: "var(--text-primary)", letterSpacing: "-0.04em", lineHeight: 1 }}>
+            {stats.inProgress < 10 ? `0${stats.inProgress}` : stats.inProgress}
+          </div>
+          <div style={{ fontSize: "0.76rem", color: "var(--text-secondary)", marginTop: "0.35rem" }}>
+            Assigned to municipal engineers
+          </div>
+        </div>
+
+        <div className="card" style={{ padding: "1.25rem 1.5rem", border: "1px solid var(--border)", background: "var(--white)" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "0.4rem" }}>
+            <span style={{ fontSize: "0.74rem", fontWeight: "700", color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+              Resolved Grievances
+            </span>
+            <span style={{ fontSize: "0.68rem", fontWeight: "700", color: "var(--green-forest)", background: "var(--green-pale)", border: "1px solid var(--green-border)", padding: "0.15rem 0.5rem", borderRadius: "999px" }}>
+              Completed
+            </span>
+          </div>
+          <div style={{ fontFamily: "var(--font-heading)", fontSize: "2.25rem", fontWeight: "800", color: "var(--green-primary)", letterSpacing: "-0.04em", lineHeight: 1 }}>
+            {stats.resolved < 10 ? `0${stats.resolved}` : stats.resolved}
+          </div>
+          <div style={{ fontSize: "0.76rem", color: "var(--green-forest)", fontWeight: "600", marginTop: "0.35rem" }}>
+            Field work verified and closed
+          </div>
+        </div>
+
+        <div className="card" style={{ padding: "1.25rem 1.5rem", border: "1px solid var(--border)", background: "var(--white)" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "0.4rem" }}>
+            <span style={{ fontSize: "0.74rem", fontWeight: "700", color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+              24h SLA Compliance
+            </span>
+            <span style={{ fontSize: "0.68rem", fontWeight: "700", color: "#1D4ED8", background: "#EFF6FF", border: "1px solid #BFDBFE", padding: "0.15rem 0.5rem", borderRadius: "999px" }}>
+              Guaranteed
+            </span>
+          </div>
+          <div style={{ fontFamily: "var(--font-heading)", fontSize: "2.25rem", fontWeight: "800", color: "var(--text-primary)", letterSpacing: "-0.04em", lineHeight: 1 }}>
+            100%
+          </div>
+          <div style={{ fontSize: "0.76rem", color: "var(--text-secondary)", marginTop: "0.35rem" }}>
+            Official municipal turnaround rate
+          </div>
+        </div>
+
+        <div className="card" style={{ padding: "1.25rem 1.5rem", border: "1px solid var(--border)", background: "var(--white)" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "0.4rem" }}>
+            <span style={{ fontSize: "0.74rem", fontWeight: "700", color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+              Civic Impact Points
+            </span>
+            <span style={{ fontSize: "0.68rem", fontWeight: "700", color: "var(--green-forest)", background: "var(--green-pale)", border: "1px solid var(--green-border)", padding: "0.15rem 0.5rem", borderRadius: "999px" }}>
+              Top 5% Citizen
+            </span>
+          </div>
+          <div style={{ fontFamily: "var(--font-heading)", fontSize: "2.25rem", fontWeight: "800", color: "var(--green-forest)", letterSpacing: "-0.04em", lineHeight: 1 }}>
+            340
+          </div>
+          <div style={{ fontSize: "0.76rem", color: "var(--text-secondary)", marginTop: "0.35rem" }}>
+            Earned for verified community reporting
+          </div>
+        </div>
       </div>
 
       {/* ── TOOLBAR ── */}
